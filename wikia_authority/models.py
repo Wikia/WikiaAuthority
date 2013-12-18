@@ -1,5 +1,21 @@
 
 
+class Author:
+
+    def __init__(self, author_id, driver=None):
+        self.driver = driver
+        self.author_id = author_id
+
+    @property
+    def anonymous(self):
+        return self.driver.is_author_anonymous(self.author_id)
+
+    @property
+    def betweenness(self):
+        return (self.driver.shortest_page_paths_for_author(self.author_id)
+                / self.driver.all_shortest_page_paths_by_author())
+
+
 
 class Revision:
 
@@ -40,22 +56,21 @@ class Page:
         self.driver = driver
         self.page_id = page_id
 
+    @property
     def revisions_for_author(self, author):
         return [Revision(rev_id, self.driver) for rev_id in self.driver.page_revisions_for_author(self.page_id, author.id)]
 
+    @property
     def authors(self):
         return [Author(author_id, self.driver) for author_id in self.driver.page_authors(self.page_id)]
 
+    @property
     def revisions(self):
         return [Revision(rev_id, self.driver) for rev_id in self.driver.revisions_for_page(self.page_id)]
 
-
-class Author:
-
-    def __init__(self, author_id, driver=None):
-        self.driver = driver
-        self.author_id = author_id
-
     @property
-    def anonymous(self):
-        return self.driver.is_author_anonymous(self.author_id)
+    def betweenness(self):
+        return self.driver.shortest_paths_for_page(self.page_id) / self.driver.all_shortest_page_paths()
+
+
+

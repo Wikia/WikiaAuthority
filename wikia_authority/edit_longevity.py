@@ -76,10 +76,14 @@ def author_page_contributions(author, page):
     )
 
 
+def all_page_contributions(page):
+    return [(revision.author, edit_contribution(revision)) for revision in page.revisions]
+
+
 def main_contributors(page,
                       minimum_contribution_threshold=None,
                       percentage_threshold=0.1):
-    all_contributions = [(revision.author, edit_contribution(revision)) for revision in page.revisions]
+    all_contributions = all_page_contributions(page)
     total_contributions = sum(map(lambda x: x[1], all_contributions))
     authored_revisions = filter(lambda x: not x[0].anonymous, all_contributions)
     worthwhile_authors = set(map(lambda x: x[0], authored_revisions))
