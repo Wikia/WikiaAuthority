@@ -1,3 +1,6 @@
+"""
+These models wrap drivers that extract this data
+"""
 
 
 class Author:
@@ -14,7 +17,6 @@ class Author:
     def betweenness(self):
         return (self.driver.shortest_page_paths_for_author(self.author_id)
                 / self.driver.all_shortest_page_paths_by_author())
-
 
 
 class Revision:
@@ -39,7 +41,7 @@ class Revision:
     @property
     def children(self):
         # specified for future uses in other things
-        return [Revision(rev_id, self.driver) for rev_id in self.driver.children(self.revision_id)]
+        return [Revision(rev_id, self.driver) for rev_id in self.driver.revision_children(self.revision_id)]
 
     @property
     def child(self):
@@ -58,7 +60,8 @@ class Page:
 
     @property
     def revisions_for_author(self, author):
-        return [Revision(rev_id, self.driver) for rev_id in self.driver.page_revisions_for_author(self.page_id, author.id)]
+        return [Revision(rev_id, self.driver)
+                for rev_id in self.driver.page_revisions_for_author(self.page_id, author.id)]
 
     @property
     def authors(self):
