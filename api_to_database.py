@@ -1,5 +1,6 @@
 from lxml import html
-from nltk import bigrams
+from pygraph.classes.digraph import digraph
+from pygraph.algorithms.pagerank import pagerank
 import requests
 import sys
 import multiprocessing
@@ -124,13 +125,58 @@ def get_contributing_authors(arg_tuple):
     return [title, sorted(top_authors_to_contrib, key=lambda x: x[1], reverse=True)]
 
 
+def links_for_page(title_object, plcontinue=None):
+    global api_url
+    title_string = title_object['title']
+    params = {'action': 'query', 'titles': title_string, 'plnamespace': 0,
+              'prop': 'links', 'pllimit': 500, 'format': 'json'}
+    if plcontinue is not None:
+        params['plcontinue'] = plcontinue
+    response = requests.get(api_url, params=params).json()
+    links = [link['title'] for link in response.get('query', {}).get('pages', {0: {}}).values()[0].get('links', [])]
+    query_continue = response.get('query-continue', {}).get('links', {}).get('plcontinue')
+    if query_continue is not None:
+        return title_string, links + links_for_page(title_object, plcontinue=response['query-continue'])[1]
+    return title_string, links
+
+
+def get_pagerank(titles):
+    global cpus
+    pool = multiprocessing.Pool(processes=cpus)
+    all_links = pool.map(links_for_page, titles)
+    all_title_strings = list(set([to_string for response in all_links for to_string in response[1]]
+                                 + [obj['title'] for obj in all_titles]))
+
+    wiki_graph = digraph()
+    wiki_graph.add_nodes(all_title_strings)  # to prevent missing node_neighbors table
+    map(wiki_graph.add_edge,
+        [(title_object['title'], target) for title_object in all_titles for target in links_for_page(title_object)[1]])
+
+    return pagerank(wiki_graph)
+
+
+def author_centrality(titles_to_authors):
+    author_graph = digraph()
+    author_graph.add_nodes(map(lambda x: "title_%s" % x, titles_to_authors.keys()))
+    author_graph.add_nodes(list(set(['author_%s' % author for value in titles_to_authors.values()
+                                     for author, contrib in value])))
+    map(author_graph.add_edge,
+        [('title_%s' % title, 'author_%s' % author)
+         for title in titles_to_authors
+         for author, contrib in titles_to_authors[title]])
+
+    # casting to int here but maybe want to use username instead?
+    return dict([(int('_'.join(item[0].split('_')[1:])), item[1])
+                 for item in pagerank(author_graph).items() if item[0].startswith('author_')])
+
+
 try:
     cpus = multiprocessing.cpu_count()
 except NotImplementedError:
     cpus = 2   # arbitrary default
 
 wiki_id = sys.argv[1]
-test_run = len(sys.argv) >= 2
+test_run = len(sys.argv) >= 3
 minimum_authors = 5
 minimum_contribution_pct = 0.7
 
@@ -148,6 +194,11 @@ pool = multiprocessing.Pool(processes=cpus)
 all_revisions = dict(pool.map(get_all_revisions, all_titles))
 print "%d Revisions" % sum([len(rev) for rev in all_revisions])
 
-top_authors = pool.map(get_contributing_authors,
-                       [(title_obj, all_revisions[title_obj['title']]) for title_obj in all_titles])
+top_authors = dict(pool.map(get_contributing_authors,
+                            [(title_obj, all_revisions[title_obj['title']]) for title_obj in all_titles]))
 
+centralities = author_centrality(dict(top_authors))
+
+# this com_qscore_pr, the best metric per Qin and Cunningham
+print [(title['title'], sum([score * centralities[author] for author, score in top_authors[title['title']]]))
+       for title in all_titles]
