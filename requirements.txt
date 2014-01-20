@@ -1,0 +1,5 @@
+lxml==3.2.5
+numpy==1.8.0
+python-graph-core==1.8.2
+requests==2.1.0
+wsgiref==0.1.2
