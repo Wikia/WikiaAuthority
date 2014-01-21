@@ -4,6 +4,7 @@ from pygraph.algorithms.pagerank import pagerank
 import requests
 import sys
 import multiprocessing
+import json
 
 
 edit_distance_memoization_cache = {}
@@ -59,8 +60,12 @@ def edit_distance(title, earlier_revision, later_revision):
     response = resp.json()
     revision = response.get('query', {}).get('pages', {0: {}}).values()[0].get('revisions', [])[0]
     revision['adds'], revision['deletes'], revision['moves'] = 0, 0, 0
-    if 'diff' in revision and revision['diff']['*'] != '':
-        diff_dom = html.fromstring(revision['diff']['*'])
+    if ('diff' in revision
+       and revision['diff']['*'] != '' and revision['diff']['*'] is not False and revision['diff']['*'] is not None):
+        try:
+            diff_dom = html.fromstring(revision['diff']['*'])
+        except TypeError:
+            return 0
         deleted = [word for span in diff_dom.cssselect('td.diff-deletedline span.diffchange-inline')
                    for word in span.text_content().split(' ')]
         added = [word for span in diff_dom.cssselect('td.diff-addedline span.diffchange-inline')
@@ -94,22 +99,24 @@ def get_contributing_authors(arg_tuple):
     for i in range(1, len(title_revs)-1):
         prev_rev = title_revs[i-1]
         curr_rev = title_revs[i]
+        if 'revid' not in curr_rev or 'revid' not in prev_rev:
+            continue
         otherrevs = [title_revs[j] for j in range(i+1, len(title_revs[i+1:i+11]))]
-        non_author_revs = filter(lambda x: x['userid'] != curr_rev['userid'], otherrevs)
+        non_author_revs = filter(lambda x: x.get('userid', 0) != curr_rev.get('userid', 0), otherrevs)
         average_edit_quality = (
             sum(
                 [edit_distance(title, curr_rev['revid'], otherrev['revid'])
                  for otherrev in non_author_revs]
             )
-            * max([1, len(set([non_author_rev['userid'] for non_author_rev in non_author_revs]))])
+            * max([1, len(set([non_author_rev.get('userid', 0) for non_author_rev in non_author_revs]))])
         )
         edit_longevity[curr_rev['revid']] = (average_edit_quality
                                              * edit_distance(title, prev_rev['revid'], curr_rev['revid']))
-    authors = list(set([title_rev['userid'] for title_rev in title_revs]))
+    authors = list(set([title_rev.get('userid', 0) for title_rev in title_revs]))
     title_contribs = {}
     for author in authors:
         title_contribs[author] = sum([edit_longevity[title_rev['revid']] for title_rev in title_revs
-                                      if title_rev['userid'] == author and title_rev['revid'] in edit_longevity])
+                                      if title_rev.get('userid', 0) == author and title_rev['revid'] in edit_longevity])
 
     all_contribs_sum = sum(title_contribs.values())
     top_authors_to_contrib = []
@@ -192,6 +199,7 @@ print "Got %d titles" % len(all_titles)
 
 pool = multiprocessing.Pool(processes=cpus)
 all_revisions = dict(pool.map(get_all_revisions, all_titles))
+
 print "%d Revisions" % sum([len(rev) for rev in all_revisions])
 
 top_authors = dict(pool.map(get_contributing_authors,
