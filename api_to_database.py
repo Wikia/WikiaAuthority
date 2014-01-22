@@ -1,4 +1,5 @@
 from lxml import html
+from lxml.etree import ParserError
 from pygraph.classes.digraph import digraph
 from pygraph.algorithms.pagerank import pagerank
 import requests
@@ -64,7 +65,7 @@ def edit_distance(title, earlier_revision, later_revision):
        and revision['diff']['*'] != '' and revision['diff']['*'] is not False and revision['diff']['*'] is not None):
         try:
             diff_dom = html.fromstring(revision['diff']['*'])
-        except TypeError:
+        except TypeError, ParserError:
             return 0
         deleted = [word for span in diff_dom.cssselect('td.diff-deletedline span.diffchange-inline')
                    for word in span.text_content().split(' ')]
