@@ -61,7 +61,7 @@ def edit_distance(title, earlier_revision, later_revision):
     response = resp.json()
     revision = response.get('query', {}).get('pages', {0: {}}).values()[0].get('revisions', [])[0]
     revision['adds'], revision['deletes'], revision['moves'] = 0, 0, 0
-    if ('diff' in revision
+    if ('diff' in revision and '*' in revision['diff']
        and revision['diff']['*'] != '' and revision['diff']['*'] is not False and revision['diff']['*'] is not None):
         try:
             diff_dom = html.fromstring(revision['diff']['*'])
@@ -97,40 +97,44 @@ def get_contributing_authors(arg_tuple):
     title_object, title_revs = arg_tuple
     title = title_object['title']
     edit_longevity = dict()
-    for i in range(1, len(title_revs)-1):
-        prev_rev = title_revs[i-1]
-        curr_rev = title_revs[i]
-        if 'revid' not in curr_rev or 'revid' not in prev_rev:
-            continue
-        otherrevs = [title_revs[j] for j in range(i+1, len(title_revs[i+1:i+11]))]
-        non_author_revs = filter(lambda x: x.get('userid', 0) != curr_rev.get('userid', 0), otherrevs)
-        average_edit_quality = (
-            sum(
-                [edit_distance(title, curr_rev['revid'], otherrev['revid'])
-                 for otherrev in non_author_revs]
-            )
-            * max([1, len(set([non_author_rev.get('userid', 0) for non_author_rev in non_author_revs]))])
-        )
-        edit_longevity[curr_rev['revid']] = (average_edit_quality
-                                             * edit_distance(title, prev_rev['revid'], curr_rev['revid']))
-    authors = list(set([title_rev.get('userid', 0) for title_rev in title_revs]))
-    title_contribs = {}
-    for author in authors:
-        title_contribs[author] = sum([edit_longevity[title_rev['revid']] for title_rev in title_revs
-                                      if title_rev.get('userid', 0) == author and title_rev['revid'] in edit_longevity])
-
-    all_contribs_sum = sum(title_contribs.values())
     top_authors_to_contrib = []
-    top_author_pct = 0
-    for author in authors:
-        if author != 0 and title_contribs[author] > 0:
-            author_contrib_pct = float(title_contribs[author])/all_contribs_sum
-            top_authors_to_contrib += [(author, author_contrib_pct)]
-            top_author_pct += author_contrib_pct
-        if len(top_authors_to_contrib) >= minimum_authors and top_author_pct >= minimum_contribution_pct:
-            break
+    try:
+        for i in range(1, len(title_revs)-1):
+            prev_rev = title_revs[i-1]
+            curr_rev = title_revs[i]
+            if 'revid' not in curr_rev or 'revid' not in prev_rev:
+                continue
 
-    return [title, sorted(top_authors_to_contrib, key=lambda x: x[1], reverse=True)]
+            otherrevs = [title_revs[j] for j in range(i+1, len(title_revs[i+1:i+11]))]
+            non_author_revs = filter(lambda x: x.get('userid', 0) != curr_rev.get('userid', 0), otherrevs)
+            average_edit_quality = (
+                sum(
+                    [edit_distance(title, curr_rev['revid'], otherrev['revid'])
+                     for otherrev in non_author_revs]
+                )
+                * max([1, len(set([non_author_rev.get('userid', 0) for non_author_rev in non_author_revs]))])
+            )
+            edit_longevity[curr_rev['revid']] = (average_edit_quality
+                                                 * edit_distance(title, prev_rev['revid'], curr_rev['revid']))
+        authors = list(set([title_rev.get('userid', 0) for title_rev in title_revs]))
+        title_contribs = {}
+        for author in authors:
+            title_contribs[author] = sum([edit_longevity[title_rev['revid']] for title_rev in title_revs
+                                          if title_rev.get('userid', 0) == author and title_rev['revid'] in edit_longevity])
+
+        all_contribs_sum = sum(title_contribs.values())
+        top_author_pct = 0
+        for author in authors:
+            if author != 0 and title_contribs[author] > 0:
+                author_contrib_pct = float(title_contribs[author])/all_contribs_sum
+                top_authors_to_contrib += [(author, author_contrib_pct)]
+                top_author_pct += author_contrib_pct
+            if len(top_authors_to_contrib) >= minimum_authors and top_author_pct >= minimum_contribution_pct:
+                break
+    except IndexError:
+        print title, sys.exc_info()
+
+    return title, sorted(top_authors_to_contrib, key=lambda x: x[1], reverse=True)
 
 
 def links_for_page(title_object, plcontinue=None):
