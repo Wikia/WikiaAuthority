@@ -222,7 +222,7 @@ def author_centrality(titles_to_authors):
                  for item in pagerank(author_graph).items() if item[0].startswith('author_')])
 
 
-wiki_id = sys.argv[1]
+wiki_id = options.wiki_id
 test_run = len(sys.argv) >= 3
 minimum_authors = 5
 minimum_contribution_pct = 0.01
