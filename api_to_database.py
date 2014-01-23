@@ -42,14 +42,14 @@ class MinMaxScaler:
 
 
 def get_all_titles(apfrom=None, aplimit=500):
-    global api_url, test_run
+    global api_url
     params = {'action': 'query', 'list': 'allpages', 'aplimit': aplimit,
               'apfilterredir': 'nonredirects', 'format': 'json'}
     if apfrom is not None:
         params['apfrom'] = apfrom
     response = requests.get(api_url, params=params).json()
     allpages = response.get('query', {}).get('allpages', [])
-    if 'query-continue' in response and not test_run:
+    if 'query-continue' in response:
         return allpages + get_all_titles(apfrom=response['query-continue']['allpages']['apfrom'], aplimit=aplimit)
     return allpages
 
@@ -227,14 +227,12 @@ test_run = len(sys.argv) >= 3
 minimum_authors = 5
 minimum_contribution_pct = 0.01
 
-aplimit = 500 if not test_run else 10
-
 # get wiki info
 wiki_data = requests.get('http://www.wikia.com/api/v1/Wikis/Details', params={'ids': wiki_id}).json()['items'][wiki_id]
 api_url = '%sapi.php' % wiki_data['url']
 
 # can't be parallelized since it's an enum
-all_titles = get_all_titles(aplimit=aplimit)
+all_titles = get_all_titles()
 print "Got %d titles" % len(all_titles)
 
 pool = multiprocessing.Pool(processes=options.processes)
