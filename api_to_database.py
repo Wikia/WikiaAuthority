@@ -19,7 +19,7 @@ parser.add_argument('--processes', dest='processes', action='store', type=int, d
                     help='Number of processes you want to run at once')
 parser.add_argument('--test-run', dest='test_run', action='store_true', default=False,
                     help='Test run (fewer computations)')
-(options, args) = parser.parse_args()
+options = parser.parse_args()
 
 edit_distance_memoization_cache = {}
 test_run = options.test_run
