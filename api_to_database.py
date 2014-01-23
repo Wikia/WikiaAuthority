@@ -5,10 +5,24 @@ from pygraph.algorithms.pagerank import pagerank
 import requests
 import sys
 import multiprocessing
+import argparse
 
+try:
+    default_cpus = multiprocessing.cpu_count()
+except NotImplementedError:
+    default_cpus = 2   # arbitrary default
+
+parser = argparse.ArgumentParser(description='Get authoritativeness data for a given wiki.')
+parser.add_argument('--wikid-id', dest='wiki_id', action='store', required=True,
+                    help='The ID of the wiki you want to operate on')
+parser.add_argument('--processes', dest='processes', action='store', type=int, default=default_cpus
+                    help='Number of processes you want to run at once')
+parser.add_argument('--test-run', dest='test_run', action='store_true', default=False,
+                    help='Test run (fewer computations)')
+(options, args) = parser.parse_args()
 
 edit_distance_memoization_cache = {}
-test_run = False
+test_run = options.test_run
 
 
 class MinMaxScaler:
@@ -179,8 +193,8 @@ def links_for_page(title_object, plcontinue=None):
 
 
 def get_pagerank(titles):
-    global cpus
-    pool = multiprocessing.Pool(processes=cpus)
+    global options
+    pool = multiprocessing.Pool(processes=options.processes)
     all_links = pool.map(links_for_page, titles)
     all_title_strings = list(set([to_string for response in all_links for to_string in response[1]]
                                  + [obj['title'] for obj in all_titles]))
@@ -208,13 +222,6 @@ def author_centrality(titles_to_authors):
                  for item in pagerank(author_graph).items() if item[0].startswith('author_')])
 
 
-try:
-    cpus = multiprocessing.cpu_count()
-except NotImplementedError:
-    cpus = 2   # arbitrary default
-
-cpus = 32
-
 wiki_id = sys.argv[1]
 test_run = len(sys.argv) >= 3
 minimum_authors = 5
@@ -230,7 +237,7 @@ api_url = '%sapi.php' % wiki_data['url']
 all_titles = get_all_titles(aplimit=aplimit)
 print "Got %d titles" % len(all_titles)
 
-pool = multiprocessing.Pool(processes=cpus)
+pool = multiprocessing.Pool(processes=options.processes)
 
 all_revisions = []
 r = pool.map_async(get_all_revisions, all_titles, callback=all_revisions.extend)
@@ -244,7 +251,6 @@ r = pool.map_async(get_contributing_authors,
                    [(title_obj, all_revisions[title_obj['title']]) for title_obj in all_titles],
                    callback=title_top_authors.update)
 r.wait()
-print title_top_authors
 
 centralities = author_centrality(title_top_authors)
 
