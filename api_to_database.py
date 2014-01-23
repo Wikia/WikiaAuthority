@@ -5,7 +5,6 @@ from pygraph.algorithms.pagerank import pagerank
 import requests
 import sys
 import multiprocessing
-import json
 
 
 edit_distance_memoization_cache = {}
@@ -228,7 +227,7 @@ wiki_data = requests.get('http://www.wikia.com/api/v1/Wikis/Details', params={'i
 api_url = '%sapi.php' % wiki_data['url']
 
 # can't be parallelized since it's an enum
-all_titles = get_all_titles(api_url, aplimit=aplimit)
+all_titles = get_all_titles(aplimit=aplimit)
 print "Got %d titles" % len(all_titles)
 
 pool = multiprocessing.Pool(processes=cpus)
