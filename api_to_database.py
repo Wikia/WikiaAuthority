@@ -13,7 +13,7 @@ except NotImplementedError:
     default_cpus = 2   # arbitrary default
 
 parser = argparse.ArgumentParser(description='Get authoritativeness data for a given wiki.')
-parser.add_argument('--wikid-id', dest='wiki_id', action='store', required=True,
+parser.add_argument('--wiki-id', dest='wiki_id', action='store', required=True,
                     help='The ID of the wiki you want to operate on')
 parser.add_argument('--processes', dest='processes', action='store', type=int, default=default_cpus,
                     help='Number of processes you want to run at once')
