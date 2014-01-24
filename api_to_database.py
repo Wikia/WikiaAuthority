@@ -99,7 +99,7 @@ def edit_distance(title_object, earlier_revision, later_revision):
        and revision['diff']['*'] != '' and revision['diff']['*'] is not False and revision['diff']['*'] is not None):
         try:
             diff_dom = html.fromstring(revision['diff']['*'])
-        except TypeError, ParserError:
+        except (TypeError, ParserError):
             return 0
         deleted = [word for span in diff_dom.cssselect('td.diff-deletedline span.diffchange-inline')
                    for word in span.text_content().split(' ')]
@@ -174,6 +174,7 @@ def get_contributing_authors(arg_tuple):
     except IndexError:
         print title, sys.exc_info()
 
+    #print title_object['title'], top_authors
     return title_object['title'], top_authors
 
 
@@ -249,6 +250,7 @@ r = pool.map_async(get_contributing_authors,
                    [(title_obj, all_revisions[title_obj['title']]) for title_obj in all_titles],
                    callback=title_top_authors.update)
 r.wait()
+print r.get()
 
 centralities = author_centrality(title_top_authors)
 
