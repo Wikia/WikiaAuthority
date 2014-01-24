@@ -24,6 +24,8 @@ options = parser.parse_args()
 edit_distance_memoization_cache = {}
 test_run = options.test_run
 
+smoothing = 0.001
+
 
 class MinMaxScaler:
     """
@@ -124,57 +126,62 @@ def edit_quality(title_object, revision_i, revision_j):
     denominator = edit_distance(title_object, revision_i['parentid'], revision_i['revid'])
 
     val = numerator if denominator == 0 or numerator == 0 else numerator / denominator
-
     return -1 if val < 0 else 1  # must be one of[-1, 1]
 
 
 def get_contributing_authors(arg_tuple):
-    global minimum_authors, minimum_contribution_pct
+    global minimum_authors, minimum_contribution_pct, smoothing
     title_object, title_revs = arg_tuple
     top_authors = []
-    try:
-        for i in range(1, len(title_revs)):
+
+    if len(title_revs) == 1 and 'user' in title_revs[0]:
+        return title_object, {title_revs[0]['user']: 1.0}
+
+    for i in range(0, len(title_revs)):
+        curr_rev = title_revs[i]
+        if i == 0:
+            edit_dist = 1
+        else:
             prev_rev = title_revs[i-1]
-            curr_rev = title_revs[i]
             if 'revid' not in curr_rev or 'revid' not in prev_rev:
                 continue
+            edit_dist = edit_distance(title_object, prev_rev['revid'], curr_rev['revid'])
 
-            otherrevs = [title_revs[j] for j in range(i+1, len(title_revs[i+1:i+11]))]
-            non_author_revs = filter(lambda x: x.get('user', '') != curr_rev.get('user', ''), otherrevs)
-            avg_edit_qty = (sum([edit_quality(title_object, curr_rev, otherrev) for otherrev in non_author_revs])
-                            / max(1, len(set([non_author_rev.get('user', '') for non_author_rev in non_author_revs]))))
-            curr_rev['edit_longevity'] = (avg_edit_qty
-                                          * edit_distance(title_object, prev_rev['revid'], curr_rev['revid']))
+        non_author_revs_comps = [(title_revs[j-1], title_revs[j]) for j in range(i+1, len(title_revs[i+1:i+11]))
+                                 if title_revs[j].get('user', '') != curr_rev.get('user')]
+        
+        avg_edit_qty = (sum(map(lambda x: edit_quality(title_object, x[0], x[1]), non_author_revs_comps))
+                        / max(1, len(set([non_author_rev_cmp[1].get('user', '') for non_author_rev_cmp in non_author_revs_comps]))))
+        if avg_edit_qty == 0:
+            avg_edit_qty = smoothing
+        curr_rev['edit_longevity'] = avg_edit_qty * edit_dist
 
-        authors = filter(lambda x: x['userid'] != 0 and x['user'] != '',
-                         dict([(title_rev.get('userid', 0),
-                               {'userid': title_rev.get('userid', 0), 'user': title_rev.get('user', '')}
-                                ) for title_rev in title_revs]).values()
-                         )
+    authors = filter(lambda x: x['userid'] != 0 and x['user'] != '',
+                     dict([(title_rev.get('userid', 0),
+                            {'userid': title_rev.get('userid', 0), 'user': title_rev.get('user', '')}
+                            ) for title_rev in title_revs]).values()
+                     )
 
-        for author in authors:
-            author['contribs'] = sum([title_rev['edit_longevity'] for title_rev in title_revs
-                                      if title_rev.get('userid', 0) == author.get('userid', 0)
-                                      and 'edit_longevity' in title_rev and title_rev['edit_longevity'] > 0])
+    for author in authors:
+        author['contribs'] = sum([title_rev['edit_longevity'] for title_rev in title_revs
+                                  if title_rev.get('userid', 0) == author.get('userid', 0)
+                                  and 'edit_longevity' in title_rev and title_rev['edit_longevity'] > 0])
 
-        authors = filter(lambda x: x.get('contribs', 0) > 0, authors)
+    authors = filter(lambda x: x.get('contribs', 0) > 0, authors)
 
-        all_contribs_sum = sum([a['contribs'] for a in authors])
+    all_contribs_sum = sum([a['contribs'] for a in authors])
 
-        for author in authors:
-            author['contrib_pct'] = author['contribs']/all_contribs_sum
+    for author in authors:
+        author['contrib_pct'] = author['contribs']/all_contribs_sum
 
-        for author in sorted(authors, key=lambda x: x['contrib_pct'], reverse=True):
-            if 'user' not in author:
-                continue
-            if author['contrib_pct'] < minimum_contribution_pct and len(top_authors) >= minimum_authors:
-                break
-            top_authors += [author]
+    for author in sorted(authors, key=lambda x: x['contrib_pct'], reverse=True):
+        if 'user' not in author:
+            continue
+        if author['contrib_pct'] < minimum_contribution_pct and len(top_authors) >= minimum_authors:
+            break
+        top_authors += [author]
 
-    except IndexError:
-        print title, sys.exc_info()
-
-    #print title_object['title'], top_authors
+    print title_object['title']
     return title_object['title'], top_authors
 
 
