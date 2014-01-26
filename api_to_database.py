@@ -227,7 +227,9 @@ def links_for_page(title_object, plcontinue=None):
 def get_pagerank(titles):
     global options
     pool = multiprocessing.Pool(processes=options.processes)
-    all_links = pool.map(links_for_page, titles)
+    r = pool.map_async(links_for_page, titles)
+    r.wait()
+    all_links = r.get()
     all_title_strings = list(set([to_string for response in all_links for to_string in response[1]]
                                  + [obj['title'] for obj in all_titles]))
 
@@ -275,9 +277,6 @@ api_url = '%sapi.php' % wiki_data['url']
 # can't be parallelized since it's an enum
 all_titles = get_all_titles()
 print "Got %d titles" % len(all_titles)
-
-print get_pagerank(all_titles)
-sys.exit()
 
 pool = multiprocessing.Pool(processes=options.processes)
 
