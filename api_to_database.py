@@ -6,6 +6,7 @@ import requests
 import sys
 import multiprocessing
 import argparse
+import time
 
 try:
     default_cpus = multiprocessing.cpu_count()
@@ -49,7 +50,9 @@ def get_all_titles(apfrom=None, aplimit=500):
               'apfilterredir': 'nonredirects', 'format': 'json'}
     if apfrom is not None:
         params['apfrom'] = apfrom
-    response = requests.get(api_url, params=params).json()
+    resp = requests.get(api_url, params=params)
+    response = resp.json()
+    resp.close()
     allpages = response.get('query', {}).get('allpages', [])
     if 'query-continue' in response:
         return allpages + get_all_titles(apfrom=response['query-continue']['allpages']['apfrom'], aplimit=aplimit)
@@ -68,7 +71,9 @@ def get_all_revisions(title_object, rvstartid=None):
               'format': 'json'}
     if rvstartid is not None:
         params['rvstartid'] = rvstartid
-    response = requests.get(api_url, params=params).json()
+    resp = requests.get(api_url, params=params)
+    response = resp.json()
+    resp.close()
     revisions = response.get('query', {}).get('pages', {0: {}}).values()[0].get('revisions', [])
     if 'query-continue' in response:
         return (title_string, (revisions
@@ -76,7 +81,7 @@ def get_all_revisions(title_object, rvstartid=None):
     return [title_string, revisions]
 
 
-def edit_distance(title_object, earlier_revision, later_revision):
+def edit_distance(title_object, earlier_revision, later_revision, already_retried=False):
     global api_url, edit_distance_memoization_cache
     if (later_revision, earlier_revision) in edit_distance_memoization_cache:
         return edit_distance_memoization_cache[(earlier_revision, later_revision)]
@@ -89,9 +94,19 @@ def edit_distance(title_object, earlier_revision, later_revision):
               'rvdiffto': later_revision,
               'titles': title_object['title']}
 
-    resp = requests.get(api_url, params=params)
-    response = resp.json()
+    try:
+        resp = requests.get(api_url, params=params)
+    except requests.exceptions.ConnectionError as e:
+        if already_retried:
+            print "Gave up on some socket shit"
+            return 0
+        print "Fucking sockets"
+        time.sleep(240) # wait four minutes for your wimpy ass sockets to get their shit together
+        return edit_distance(title_object, earlier_revision, later_revision, already_retried=True)
 
+    response = resp.json()
+    resp.close()
+    time.sleep(0.025)  # prophylactic throttling
     revision = (response.get('query', {})
                         .get('pages', {0: {}})
                         .get(unicode(title_object['pageid']), {})
@@ -101,25 +116,26 @@ def edit_distance(title_object, earlier_revision, later_revision):
        and revision['diff']['*'] != '' and revision['diff']['*'] is not False and revision['diff']['*'] is not None):
         try:
             diff_dom = html.fromstring(revision['diff']['*'])
-        except (TypeError, ParserError):
+            deleted = [word for span in diff_dom.cssselect('td.diff-deletedline span.diffchange-inline')
+                       for word in span.text_content().split(' ')]
+            added = [word for span in diff_dom.cssselect('td.diff-addedline span.diffchange-inline')
+                     for word in span.text_content().split(' ')]
+            adds = sum([1 for word in added if word not in deleted])
+            deletes = sum([1 for word in deleted if word not in added])
+            moves = sum([1 for word in added if word in deleted])
+            changes = revision['adds']+revision['deletes']+revision['moves']  # bad approx. of % of document
+            if changes > 0:
+                moves /= changes
+            distance = max([adds, deletes]) - 0.5 * min([adds, deletes]) + moves
+            edit_distance_memoization_cache[(earlier_revision, later_revision)] = distance
+            return distance
+        except (TypeError, ParserError, UnicodeEncodeError):
             return 0
-        deleted = [word for span in diff_dom.cssselect('td.diff-deletedline span.diffchange-inline')
-                   for word in span.text_content().split(' ')]
-        added = [word for span in diff_dom.cssselect('td.diff-addedline span.diffchange-inline')
-                 for word in span.text_content().split(' ')]
-        adds = sum([1 for word in added if word not in deleted])
-        deletes = sum([1 for word in deleted if word not in added])
-        moves = sum([1 for word in added if word in deleted])
-        changes = revision['adds']+revision['deletes']+revision['moves']  # bad approx. of % of document
-        if changes > 0:
-            moves /= changes
-        distance = max([adds, deletes]) - 0.5 * min([adds, deletes]) + moves
-        edit_distance_memoization_cache[(earlier_revision, later_revision)] = distance
-        return distance
     return 0
 
 
 def edit_quality(title_object, revision_i, revision_j):
+
     numerator = (edit_distance(title_object, revision_i['parentid'], revision_j['revid'])
                  - edit_distance(title_object, revision_i['revid'], revision_j['revid']))
 
@@ -131,11 +147,17 @@ def edit_quality(title_object, revision_i, revision_j):
 
 def get_contributing_authors(arg_tuple):
     global minimum_authors, minimum_contribution_pct, smoothing
+
+    #  within scope of map_async subprocess
+    requests.Session().mount('http://', requests.adapters.HTTPAdapter(pool_connections=1, pool_maxsize=1, pool_block=True))
+
     title_object, title_revs = arg_tuple
     top_authors = []
 
     if len(title_revs) == 1 and 'user' in title_revs[0]:
-        return title_object, {title_revs[0]['user']: 1.0}
+        title_revs[0]['contrib_pct'] = 1
+        title_revs[0]['contribs'] = 1
+        return title_object['title'], title_revs
 
     for i in range(0, len(title_revs)):
         curr_rev = title_revs[i]
@@ -181,7 +203,7 @@ def get_contributing_authors(arg_tuple):
             break
         top_authors += [author]
 
-    print title_object['title']
+    print title_object['title'], top_authors
     return title_object['title'], top_authors
 
 
@@ -192,7 +214,9 @@ def links_for_page(title_object, plcontinue=None):
               'prop': 'links', 'pllimit': 500, 'format': 'json'}
     if plcontinue is not None:
         params['plcontinue'] = plcontinue
-    response = requests.get(api_url, params=params).json()
+    resp = requests.get(api_url, params=params)
+    response = resp.json()
+    resp.close()
     links = [link['title'] for link in response.get('query', {}).get('pages', {0: {}}).values()[0].get('links', [])]
     query_continue = response.get('query-continue', {}).get('links', {}).get('plcontinue')
     if query_continue is not None:
@@ -218,9 +242,14 @@ def get_pagerank(titles):
 def author_centrality(titles_to_authors):
     author_graph = digraph()
     author_graph.add_nodes(map(lambda x: "title_%s" % x, titles_to_authors.keys()))
+    for authors in titles_to_authors.values():
+        print authors
+        for author in authors:
+            print author
+            print author['user']
     author_graph.add_nodes(list(set(['author_%s' % author['user']
-                                     for title in titles_to_authors
-                                     for author in titles_to_authors[title]])))
+                                     for authors in titles_to_authors.values()
+                                     for author in authors])))
     map(author_graph.add_edge,
         [('title_%s' % title, 'author_%s' % author['user'])
          for title in titles_to_authors
@@ -230,13 +259,17 @@ def author_centrality(titles_to_authors):
                  for item in pagerank(author_graph).items() if item[0].startswith('author_')])
 
 
+start = time.time()
+
 wiki_id = options.wiki_id
 test_run = len(sys.argv) >= 3
 minimum_authors = 5
 minimum_contribution_pct = 0.01
 
 # get wiki info
-wiki_data = requests.get('http://www.wikia.com/api/v1/Wikis/Details', params={'ids': wiki_id}).json()['items'][wiki_id]
+resp = requests.get('http://www.wikia.com/api/v1/Wikis/Details', params={'ids': wiki_id})
+wiki_data = resp.json()['items'][wiki_id]
+resp.close()
 api_url = '%sapi.php' % wiki_data['url']
 
 # can't be parallelized since it's an enum
@@ -257,7 +290,10 @@ r = pool.map_async(get_contributing_authors,
                    [(title_obj, all_revisions[title_obj['title']]) for title_obj in all_titles],
                    callback=title_top_authors.update)
 r.wait()
-print r.get()
+
+print time.time() - start
+
+print title_top_authors
 
 centralities = author_centrality(title_top_authors)
 
@@ -271,3 +307,5 @@ print [(title,
         sum([contribs_scaler.scale(author['contribs']) * centrality_scaler.scale(centralities[author['user']])
              for author in title_top_authors[title]]))
        for title in title_top_authors]
+
+print time.time() - start
