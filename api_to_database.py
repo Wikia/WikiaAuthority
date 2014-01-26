@@ -276,6 +276,9 @@ api_url = '%sapi.php' % wiki_data['url']
 all_titles = get_all_titles()
 print "Got %d titles" % len(all_titles)
 
+print get_pagerank(all_titles)
+sys.exit()
+
 pool = multiprocessing.Pool(processes=options.processes)
 
 all_revisions = []
