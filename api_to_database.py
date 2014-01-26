@@ -1,7 +1,9 @@
+from boto import connect_s3
 from lxml import html
 from lxml.etree import ParserError
 from pygraph.classes.digraph import digraph
 from pygraph.algorithms.pagerank import pagerank
+import json
 import requests
 import sys
 import multiprocessing
@@ -146,18 +148,19 @@ def edit_quality(title_object, revision_i, revision_j):
 
 
 def get_contributing_authors(arg_tuple):
-    global minimum_authors, minimum_contribution_pct, smoothing
+    global minimum_authors, minimum_contribution_pct, smoothing, wiki_id
 
     #  within scope of map_async subprocess
     requests.Session().mount('http://', requests.adapters.HTTPAdapter(pool_connections=1, pool_maxsize=1, pool_block=True))
 
     title_object, title_revs = arg_tuple
+    doc_id = "%s_%s" % (str(wiki_id), title_object['pageid'])
     top_authors = []
 
     if len(title_revs) == 1 and 'user' in title_revs[0]:
         title_revs[0]['contrib_pct'] = 1
         title_revs[0]['contribs'] = 1
-        return title_object['title'], title_revs
+        return doc_id, title_revs
 
     for i in range(0, len(title_revs)):
         curr_rev = title_revs[i]
@@ -203,8 +206,7 @@ def get_contributing_authors(arg_tuple):
             break
         top_authors += [author]
 
-    print title_object['title'], top_authors
-    return title_object['title'], top_authors
+    return doc_id, top_authors
 
 
 def links_for_page(title_object, plcontinue=None):
@@ -244,11 +246,6 @@ def get_pagerank(titles):
 def author_centrality(titles_to_authors):
     author_graph = digraph()
     author_graph.add_nodes(map(lambda x: "title_%s" % x, titles_to_authors.keys()))
-    for authors in titles_to_authors.values():
-        print authors
-        for author in authors:
-            print author
-            print author['user']
     author_graph.add_nodes(list(set(['author_%s' % author['user']
                                      for authors in titles_to_authors.values()
                                      for author in authors])))
@@ -257,8 +254,34 @@ def author_centrality(titles_to_authors):
          for title in titles_to_authors
          for author in titles_to_authors[title]])
 
-    return dict([('_'.join(item[0].split('_')[1:]), item[1])
-                 for item in pagerank(author_graph).items() if item[0].startswith('author_')])
+    centralities = dict([('_'.join(item[0].split('_')[1:]), item[1])
+                         for item in pagerank(author_graph).items() if item[0].startswith('author_')])
+
+    centrality_scaler = MinMaxScaler(centralities.values())
+
+    return dict([(cent_author, centrality_scaler.scale(cent_val))
+                  for cent_author, cent_val in centralities.items()])
+
+
+def get_title_top_authors(all_titles, all_revisions):
+    global options
+    pool = multiprocessing.Pool(processes=options.processes)
+    title_top_authors = {}
+    r = pool.map_async(get_contributing_authors,
+                       [(title_obj, all_revisions[title_obj['title']]) for title_obj in all_titles],
+                       callback=title_top_authors.update)
+    r.wait()
+    contribs_scaler = MinMaxScaler([author['contribs']
+                                for title in title_top_authors
+                                for author in title_top_authors[title]])
+    scaled_title_top_authors = {}
+    for title, authors in title_top_authors.items():
+        new_authors = []
+        for author in authors:
+            author['contribs'] = contribs_scaler.scale(author['contribs'])
+            new_authors.append(author)
+        scaled_title_top_authors[title] = new_authors
+    return scaled_title_top_authors
 
 
 start = time.time()
@@ -286,28 +309,45 @@ r.wait()
 print "%d Revisions" % sum([len(revs) for title, revs in all_revisions])
 all_revisions = dict(all_revisions)
 
-title_top_authors = {}
-
-r = pool.map_async(get_contributing_authors,
-                   [(title_obj, all_revisions[title_obj['title']]) for title_obj in all_titles],
-                   callback=title_top_authors.update)
-r.wait()
+title_top_authors = get_title_top_authors(all_titles, all_revisions)
 
 print time.time() - start
 
-print title_top_authors
-
 centralities = author_centrality(title_top_authors)
 
-centrality_scaler = MinMaxScaler(centralities.values())
-contribs_scaler = MinMaxScaler([author['contribs']
-                                for title in title_top_authors
-                                for author in title_top_authors[title]])
-
 # this com_qscore_pr, the best metric per Qin and Cunningham
-print [(title,
-        sum([contribs_scaler.scale(author['contribs']) * centrality_scaler.scale(centralities[author['user']])
-             for author in title_top_authors[title]]))
-       for title in title_top_authors]
+comqscore_authority = dict([('%s_%s' % (str(wiki_id), str(pageid)),
+                             sum([author['contribs'] * centralities[author['user']]
+                                  for author in authors])
+                             ) for pageid, authors in title_top_authors.items()])
+
+
+title_to_pageid = dict([(title_object['title'], title_object['pageid']) for title_object in all_titles])
+pr = dict([('%s_%s' % (str(wiki_id), title_to_pageid[title]), pagerank)
+           for title, pagerank in get_pagerank(all_titles).items() if title in title_to_pageid])
+
+print "Finished getting all data, now storing it..."
+print time.time() - start
+
+print "centralities"
+print centralities
+print "comqscore"
+print comqscore_authority
+print "pagerank"
+print pr
+
+bucket = connect_s3().get_bucket('nlp-data')
+key = bucket.new_key(key_name='service_responses/%s/WikiAuthorCentralityService.get' % wiki_id)
+key.set_contents_from_string(json.dumps(centralities, ensure_ascii=False))
+
+key = bucket.new_key(key_name='service_responses/%s/WikiAuthorityService.get' % wiki_id)
+key.set_contents_from_string(json.dumps(comqscore_authority, ensure_ascii=False))
+
+for doc_id, dct in title_top_authors.items():
+    key = bucket.new_key(key_name='service_responses/%s/PageAuthorityService.get' % (doc_id.replace('_', '/')))
+    key.set_contents_from_string(json.dumps(dct, ensure_ascii=False))
+
+key = bucket.new_key(key_name='service_responses/%s/WikiPageRankService.get')
+key.set_contents_from_string(json.dumps(pr, ensure_ascii=False))
 
 print time.time() - start
