@@ -46,6 +46,12 @@ class MinMaxScaler:
                 / (self.max - self.min)) + self.enforced_min
 
 
+# multiprocessing's gotta grow up and let me do anonymous functions
+def set_page_key(x):
+    bucket.new_key(key_name='service_responses/%s/PageAuthorityService.get' % (x[0].replace('_', '/'))).set_contents_from_string(json.dumps(x[1], ensure_ascii=False))
+    return True
+
+
 def get_all_titles(apfrom=None, aplimit=500):
     global api_url
     params = {'action': 'query', 'list': 'allpages', 'aplimit': aplimit,
@@ -352,9 +358,11 @@ key.set_contents_from_string(json.dumps(centralities, ensure_ascii=False))
 key = bucket.new_key(key_name='service_responses/%s/WikiAuthorityService.get' % wiki_id)
 key.set_contents_from_string(json.dumps(comqscore_authority, ensure_ascii=False))
 
-for doc_id, dct in title_top_authors.items():
-    key = bucket.new_key(key_name='service_responses/%s/PageAuthorityService.get' % (doc_id.replace('_', '/')))
-    key.set_contents_from_string(json.dumps(dct, ensure_ascii=False))
+r = pool.map_async(
+    set_page_key, 
+    title_top_authors.items()
+)
+r.wait()
 
 key = bucket.new_key(key_name='service_responses/%s/WikiPageRankService.get')
 key.set_contents_from_string(json.dumps(pr, ensure_ascii=False))
