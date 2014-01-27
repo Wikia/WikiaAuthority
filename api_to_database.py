@@ -307,7 +307,6 @@ start = time.time()
 wiki_id = options.wiki_id
 print "wiki id is", wiki_id
 
-test_run = len(sys.argv) >= 3
 minimum_authors = 5
 minimum_contribution_pct = 0.01
 
@@ -342,14 +341,18 @@ comqscore_authority = dict([('%s_%s' % (str(wiki_id), str(pageid)),
                                   for author in authors])
                              ) for pageid, authors in title_top_authors.items()])
 
-print "Got comsqscore"
+print "Got comsqscore, storing data"
 title_to_pageid = dict([(title_object['title'], title_object['pageid']) for title_object in all_titles])
+
+"""
+
 pr = dict([('%s_%s' % (str(wiki_id), title_to_pageid[title]), pagerank)
            for title, pagerank in get_pagerank(all_titles).items() if title in title_to_pageid])
 
 print "Got PR"
 print "Finished getting all data, now storing it..."
 print time.time() - start
+"""
 
 bucket = connect_s3().get_bucket('nlp-data')
 key = bucket.new_key(key_name='service_responses/%s/WikiAuthorCentralityService.get' % wiki_id)
@@ -364,7 +367,9 @@ r = pool.map_async(
 )
 r.wait()
 
+"""
 key = bucket.new_key(key_name='service_responses/%s/WikiPageRankService.get')
 key.set_contents_from_string(json.dumps(pr, ensure_ascii=False))
+"""
 
 print wiki_id, "finished in", time.time() - start, "seconds"
