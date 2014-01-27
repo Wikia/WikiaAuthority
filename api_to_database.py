@@ -85,7 +85,7 @@ def get_all_revisions(title_object, rvstartid=None):
 
 def edit_distance(title_object, earlier_revision, later_revision, already_retried=False):
     global api_url, edit_distance_memoization_cache
-    if (later_revision, earlier_revision) in edit_distance_memoization_cache:
+    if (earlier_revision, later_revision) in edit_distance_memoization_cache:
         return edit_distance_memoization_cache[(earlier_revision, later_revision)]
     params = {'action': 'query',
               'prop': 'revisions',
@@ -147,6 +147,16 @@ def edit_quality(title_object, revision_i, revision_j):
     return -1 if val < 0 else 1  # must be one of[-1, 1]
 
 
+def get_contributing_authors_safe(arg_tuple):
+    global wiki_id
+    try:
+        res = get_contributing_authors(arg_tuple)
+    except Exception as e:
+        print arg_tuple, e
+        return str(wiki_id) + '_' + str(arg_tuple[0]['pageid']), []
+    return res
+
+
 def get_contributing_authors(arg_tuple):
     global minimum_authors, minimum_contribution_pct, smoothing, wiki_id
 
@@ -156,7 +166,6 @@ def get_contributing_authors(arg_tuple):
     title_object, title_revs = arg_tuple
     doc_id = "%s_%s" % (str(wiki_id), title_object['pageid'])
     top_authors = []
-
     if len(title_revs) == 1 and 'user' in title_revs[0]:
         title_revs[0]['contrib_pct'] = 1
         title_revs[0]['contribs'] = 1
@@ -205,7 +214,6 @@ def get_contributing_authors(arg_tuple):
         if author['contrib_pct'] < minimum_contribution_pct and len(top_authors) >= minimum_authors:
             break
         top_authors += [author]
-
     return doc_id, top_authors
 
 
@@ -267,10 +275,14 @@ def get_title_top_authors(all_titles, all_revisions):
     global options
     pool = multiprocessing.Pool(processes=options.processes)
     title_top_authors = {}
-    r = pool.map_async(get_contributing_authors,
+    r = pool.map_async(get_contributing_authors_safe,
                        [(title_obj, all_revisions[title_obj['title']]) for title_obj in all_titles],
                        callback=title_top_authors.update)
     r.wait()
+    if len(title_top_authors) == 0:
+        print r.get()
+        sys.exit()
+    
     contribs_scaler = MinMaxScaler([author['contribs']
                                 for title in title_top_authors
                                 for author in title_top_authors[title]])
@@ -287,6 +299,8 @@ def get_title_top_authors(all_titles, all_revisions):
 start = time.time()
 
 wiki_id = options.wiki_id
+print "wiki id is", wiki_id
+
 test_run = len(sys.argv) >= 3
 minimum_authors = 5
 minimum_contribution_pct = 0.01
@@ -295,6 +309,7 @@ minimum_contribution_pct = 0.01
 resp = requests.get('http://www.wikia.com/api/v1/Wikis/Details', params={'ids': wiki_id})
 wiki_data = resp.json()['items'][wiki_id]
 resp.close()
+print wiki_data['title']
 api_url = '%sapi.php' % wiki_data['url']
 
 # can't be parallelized since it's an enum
@@ -321,20 +336,14 @@ comqscore_authority = dict([('%s_%s' % (str(wiki_id), str(pageid)),
                                   for author in authors])
                              ) for pageid, authors in title_top_authors.items()])
 
-
+print "Got comsqscore"
 title_to_pageid = dict([(title_object['title'], title_object['pageid']) for title_object in all_titles])
 pr = dict([('%s_%s' % (str(wiki_id), title_to_pageid[title]), pagerank)
            for title, pagerank in get_pagerank(all_titles).items() if title in title_to_pageid])
 
+print "Got PR"
 print "Finished getting all data, now storing it..."
 print time.time() - start
-
-print "centralities"
-print centralities
-print "comqscore"
-print comqscore_authority
-print "pagerank"
-print pr
 
 bucket = connect_s3().get_bucket('nlp-data')
 key = bucket.new_key(key_name='service_responses/%s/WikiAuthorCentralityService.get' % wiki_id)
@@ -350,4 +359,4 @@ for doc_id, dct in title_top_authors.items():
 key = bucket.new_key(key_name='service_responses/%s/WikiPageRankService.get')
 key.set_contents_from_string(json.dumps(pr, ensure_ascii=False))
 
-print time.time() - start
+print wiki_id, "finished in", time.time() - start, "seconds"
