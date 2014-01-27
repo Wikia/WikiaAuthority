@@ -12,7 +12,7 @@ lines = [line for line in open(sys.argv[1])]
 random.shuffle(lines)
 
 for line in lines:
-    key = bucket.get_key(key_name='service_responses/%s/WikiAuthorityService.get' % line.strip())
+    key = b.get_key(key_name='service_responses/%s/WikiAuthorityService.get' % line.strip())
     if key is not None:
         continue
     print "Wiki ", line.strip()
