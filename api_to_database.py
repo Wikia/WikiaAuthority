@@ -60,7 +60,11 @@ class MinMaxScaler:
 
 # multiprocessing's gotta grow up and let me do anonymous functions
 def set_page_key(x):
-    bucket.new_key(key_name='service_responses/%s/PageAuthorityService.get' % (x[0].replace('_', '/'))).set_contents_from_string(json.dumps(x[1], ensure_ascii=False))
+    bucket = connect_s3().get_bucket('nlp-data')
+    k = bucket.new_key(key_name='/service_responses/%s/PageAuthorityService.get' % (x[0].replace('_', '/')))
+    print '/service_responses/%s/PageAuthorityService.get' % (x[0].replace('_', '/'))
+    print json.dumps(x[1])
+    k.set_contents_from_string(json.dumps(x[1], ensure_ascii=False))
     return True
 
 
@@ -374,11 +378,12 @@ key.set_contents_from_string(json.dumps(centralities, ensure_ascii=False))
 key = bucket.new_key(key_name='service_responses/%s/WikiAuthorityService.get' % wiki_id)
 key.set_contents_from_string(json.dumps(comqscore_authority, ensure_ascii=False))
 
-r = pool.map_async(
+q = pool.map_async(
     set_page_key, 
     title_top_authors.items()
 )
-r.wait()
+q.wait()
+print q.get()
 
 print wiki_id, "finished in", time.time() - start, "seconds"
 
