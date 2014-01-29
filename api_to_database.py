@@ -185,6 +185,8 @@ def get_contributing_authors(arg_tuple):
     doc_id = "%s_%s" % (str(wiki_id), title_object['pageid'])
     top_authors = []
     if len(title_revs) == 1 and 'user' in title_revs[0]:
+        return ()
+        # will this fix the bug?
         title_revs[0]['contrib_pct'] = 1
         title_revs[0]['contribs'] = 1
         return doc_id, title_revs
@@ -357,7 +359,6 @@ print "Got comsqscore, storing data"
 title_to_pageid = dict([(title_object['title'], title_object['pageid']) for title_object in all_titles])
 
 """
-
 pr = dict([('%s_%s' % (str(wiki_id), title_to_pageid[title]), pagerank)
            for title, pagerank in get_pagerank(all_titles).items() if title in title_to_pageid])
 
@@ -379,9 +380,9 @@ r = pool.map_async(
 )
 r.wait()
 
-"""
-key = bucket.new_key(key_name='service_responses/%s/WikiPageRankService.get')
-key.set_contents_from_string(json.dumps(pr, ensure_ascii=False))
-"""
-
 print wiki_id, "finished in", time.time() - start, "seconds"
+
+
+#
+# key = bucket.new_key(key_name='service_responses/%s/WikiPageRankService.get')
+# key.set_contents_from_string(json.dumps(pr, ensure_ascii=False))
