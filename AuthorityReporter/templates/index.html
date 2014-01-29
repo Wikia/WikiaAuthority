@@ -24,8 +24,14 @@
               <h3 style="text-align: left;"><a href="{{ wiki_api_data['url'] }}{{doc['url']}}">{{ doc['title'] }}</a></h3>
             </div>
             <div class="row">
-                {{doc}}
-
+                <h4>Authority</h4>
+                <em>{{doc['authority']}}</em>
+                <h4>Top Authors</h4>
+                <ul>
+                    {% for authority in doc['authorities'] %}
+                    <li>{{authority['user']}} -- {{authority['contrib_pct']}}</li>
+                    {% endfor %}
+                </ul>
             </div>
           </div>
         </div>

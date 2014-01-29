@@ -19,8 +19,13 @@ def update_top_page(args):
     if top_page.get('thumbnail') is None:
         top_page['thumbnail'] = NO_IMAGE_URL
     top_page['entities'] = CombinedWikiPageEntitiesService().get_value(wiki_id+'_'+str(top_page['id']))
-    print PageAuthorityService().get(wiki_id+'_'+wiki_id+'_'+str(top_page['id']))
+    print PageAuthorityService().get(wiki_id+'_'+str(top_page['id']))
+    print wiki_id+'_'+str(top_page['id'])
     top_page['authorities'] = PageAuthorityService().get_value(wiki_id+'_'+str(top_page['id']))
+    for author in top_page['authorities']:
+        author['contrib_pct'] = "%.2f%%" % (author['contrib_pct'] * 100.0)
+    top_page['authority'] = "%.2f" % (100.0 * top_page['authority'])
+
     return top_page
 
 
@@ -34,8 +39,9 @@ WIKI_API_DATA = None
 WIKI_URL = None
 
 
-@app.route('/<wiki_id>/')
-def index(wiki_id):
+@app.route('/<wiki_id>/<page>/')
+def index(wiki_id, page):
+    page = int(page)
     global WIKI_ID, WIKI_API_DATA, WIKI_URL, WIKI_AUTHORITY_DATA, POOL
     if WIKI_ID != wiki_id:
         WIKI_AUTHORITY_DATA = WikiAuthorityService().get_value(wiki_id)
@@ -44,7 +50,7 @@ def index(wiki_id):
                                      params=dict(ids=WIKI_ID)).json()['items'][wiki_id]
 
     top_docs = sorted(WIKI_AUTHORITY_DATA.items(), key=lambda x: x[1], reverse=True)
-    top_page_tups = [(tup[0].split('_')[-1], tup[1]) for tup in top_docs[:10]]
+    top_page_tups = [(tup[0].split('_')[-1], tup[1]) for tup in top_docs[(page-1)*10:page*10]]
 
     page_api_data = requests.get(WIKI_API_DATA['url'].split('/wiki')[0]+'/api/v1/Articles/Details',
                                  params={'ids': ','.join([x[0] for x in top_page_tups])}).json()['items']

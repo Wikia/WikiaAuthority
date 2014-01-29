@@ -1,14 +1,9 @@
 .wiki-image {
 	    text-align: center;
-	    height: 150px;
 	    padding-top: 20px;
 }
 
 .wiki-image img{
 	    max-height: 120px;
 	    max-width: 180px;
-}
-
-.content-wrapper {
-		 height: 150px;
 }
