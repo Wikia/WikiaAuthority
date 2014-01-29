@@ -185,7 +185,7 @@ def get_contributing_authors(arg_tuple):
     doc_id = "%s_%s" % (str(wiki_id), title_object['pageid'])
     top_authors = []
     if len(title_revs) == 1 and 'user' in title_revs[0]:
-        return ()
+        return doc_id, []
         # will this fix the bug?
         title_revs[0]['contrib_pct'] = 1
         title_revs[0]['contribs'] = 1
