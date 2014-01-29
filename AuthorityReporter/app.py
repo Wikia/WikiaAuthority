@@ -9,8 +9,12 @@ import os
 import boto
 import argparse
 from nlp_services.authority import WikiAuthorityService, PageAuthorityService
+from nlp_services.authority import WikiAuthorTopicAuthorityService, WikiAuthorsToIdsService
 from nlp_services.discourse.entities import CombinedWikiPageEntitiesService
+from nlp_services.caching import use_caching
 from multiprocessing import Pool
+
+use_caching()
 
 
 def update_top_page(args):
@@ -19,8 +23,6 @@ def update_top_page(args):
     if top_page.get('thumbnail') is None:
         top_page['thumbnail'] = NO_IMAGE_URL
     top_page['entities'] = CombinedWikiPageEntitiesService().get_value(wiki_id+'_'+str(top_page['id']))
-    print PageAuthorityService().get(wiki_id+'_'+str(top_page['id']))
-    print wiki_id+'_'+str(top_page['id'])
     top_page['authorities'] = PageAuthorityService().get_value(wiki_id+'_'+str(top_page['id']))
     for author in top_page['authorities']:
         author['contrib_pct'] = "%.2f%%" % (author['contrib_pct'] * 100.0)
@@ -36,18 +38,53 @@ SOLR_URL = 'http://search-s10:8983/main/'
 WIKI_ID = None
 WIKI_AUTHORITY_DATA = None
 WIKI_API_DATA = None
-WIKI_URL = None
 
 
-@app.route('/<wiki_id>/<page>/')
-def index(wiki_id, page):
-    page = int(page)
-    global WIKI_ID, WIKI_API_DATA, WIKI_URL, WIKI_AUTHORITY_DATA, POOL
+def configure_wiki_id(wiki_id):
+    global WIKI_ID, WIKI_API_DATA, WIKI_AUTHORITY_DATA
     if WIKI_ID != wiki_id:
         WIKI_AUTHORITY_DATA = WikiAuthorityService().get_value(wiki_id)
         WIKI_ID = wiki_id
         WIKI_API_DATA = requests.get('http://www.wikia.com/api/v1/Wikis/Details',
                                      params=dict(ids=WIKI_ID)).json()['items'][wiki_id]
+
+
+@app.route('/<wiki_id>/authors/')
+def authors(wiki_id):
+    global WIKI_ID, WIKI_API_DATA, WIKI_AUTHORITY_DATA, POOL
+    configure_wiki_id(wiki_id)
+
+    topic_authority_data = WikiAuthorTopicAuthorityService().get_value(wiki_id)
+
+    authors_to_topics = sorted(topic_authority_data['weighted'].items(),
+                               key=lambda x: sum(x[1].values()),
+                               reverse=True)[:10]
+
+    a2ids = WikiAuthorsToIdsService().get_value(wiki_id)
+
+    authors = dict([(x[0], dict(name=x[0],
+                                total_authority=sum(x[1].values()),
+                                topics=sorted(x[1].items(), key=lambda x: x[1], reverse=True)[:5]))
+                    for x in authors_to_topics])
+
+    user_api_data = requests.get(WIKI_API_DATA['url']+'/api/v1/User/Details',
+                                 params={'ids': ','.join([str(a2ids[user]) for user, contribs in authors_to_topics]),
+                                 'format': 'json'}).json()['items']
+
+    for user_data in user_api_data:
+        authors[user_data['name']].update(user_data)
+        authors[user_data['name']]['url'] = authors[user_data['name']]['url'][1:]
+
+    authors = sorted(authors.values(), key=lambda x: x['total_authority'], reverse=True)
+
+    return render_template('authors.html', authors=authors, wiki_api_data=WIKI_API_DATA)
+
+
+@app.route('/<wiki_id>/<page>/')
+def index(wiki_id, page):
+    page = int(page)
+    global WIKI_ID, WIKI_API_DATA, WIKI_AUTHORITY_DATA, POOL
+    configure_wiki_id(wiki_id)
 
     top_docs = sorted(WIKI_AUTHORITY_DATA.items(), key=lambda x: x[1], reverse=True)
     top_page_tups = [(tup[0].split('_')[-1], tup[1]) for tup in top_docs[(page-1)*10:page*10]]

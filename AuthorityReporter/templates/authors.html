@@ -10,28 +10,26 @@
   <body class="container">
     <script src="http://code.jquery.com/jquery.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
-    <h1><a href="/"><span class="glyphicon glyphicon-home"></span></a> Most Authoritative Pages</h1>
+    <h1><a href="/"><span class="glyphicon glyphicon-home"></span></a> Most Authoritative Authors</h1>
     <h2>{{ wiki_api_data['title'] }}</h2>
-    {% for doc in docs %}
+    {% for author in authors%}
     <div class="well">
       <div class="row">
         <div class="col-md-3 wiki-image">
-           <a href="{{ wiki_api_data['url'] }}{{doc['url']}}"><img class="img-thumbnail" src="{{ doc['thumbnail'] }}" alt=""/></a>
+            <a href="{{ wiki_api_data['url'] }}{{ author['url'] }}"><img class="img-thumbnail" src="{{ author['avatar'] }}" alt=""/></a>
         </div>
         <div class="col-md-9 content-wrapper">
           <div class="row">
             <div class="row">
-              <h3 style="text-align: left;"><a href="{{ wiki_api_data['url'] }}{{doc['url']}}">{{ doc['title'] }}</a></h3>
+              <h3 style="text-align: left;"><a href="{{ wiki_api_data['url'] }}{{ author['url'] }}">{{ author.name }}</a></h3>
             </div>
             <div class="row">
                 <h4>Authority</h4>
-                <em>{{doc['authority']}}</em>
-                <h4>Top Authors</h4>
+                <em>{{ author.total_authority }}</em>
+                <h4>Top Topics</h4>
                 <ul>
-                    {% for authority in doc['authorities'] %}
-                    {% if authority['contrib_pct'] != '0.00%' %}
-                    <li>{{authority['user']}} -- {{authority['contrib_pct']}}</li>
-                    {% endif %}
+                    {% for topic, score in author.topics %}
+                    <li>{{ topic }} -- <i>{{score}}</i></li>
                     {% endfor %}
                 </ul>
             </div>
