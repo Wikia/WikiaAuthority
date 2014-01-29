@@ -350,10 +350,10 @@ print time.time() - start
 centralities = author_centrality(title_top_authors)
 
 # this com_qscore_pr, the best metric per Qin and Cunningham
-comqscore_authority = dict([('%s_%s' % (str(wiki_id), str(pageid)),
+comqscore_authority = dict([(doc_id,
                              sum([author['contribs'] * centralities[author['user']]
                                   for author in authors])
-                             ) for pageid, authors in title_top_authors.items()])
+                             ) for doc_id, authors in title_top_authors.items()])
 
 print "Got comsqscore, storing data"
 title_to_pageid = dict([(title_object['title'], title_object['pageid']) for title_object in all_titles])
