@@ -44,7 +44,7 @@ def index(wiki_id):
                                      params=dict(ids=WIKI_ID)).json()['items'][wiki_id]
 
     top_docs = sorted(WIKI_AUTHORITY_DATA.items(), key=lambda x: x[1], reverse=True)
-    top_page_tups = [(tup[0].split('_')[-1], tup[1]) for tup in top_docs[-20:-10]]
+    top_page_tups = [(tup[0].split('_')[-1], tup[1]) for tup in top_docs[:10]]
 
     page_api_data = requests.get(WIKI_API_DATA['url'].split('/wiki')[0]+'/api/v1/Articles/Details',
                                  params={'ids': ','.join([x[0] for x in top_page_tups])}).json()['items']
