@@ -8,8 +8,9 @@ import time
 import os
 import boto
 import argparse
-from nlp_services.authority import WikiAuthorityService, PageAuthorityService
+from nlp_services.authority import WikiAuthorityService, PageAuthorityService, WikiTopicAuthorityService
 from nlp_services.authority import WikiAuthorTopicAuthorityService, WikiAuthorsToIdsService
+from nlp_services.authority import WikiTopicsToAuthorityService
 from nlp_services.discourse.entities import CombinedWikiPageEntitiesService
 from nlp_services.caching import use_caching
 from multiprocessing import Pool
@@ -49,6 +50,19 @@ def configure_wiki_id(wiki_id):
                                      params=dict(ids=WIKI_ID)).json()['items'][wiki_id]
 
 
+@app.route('/<wiki_id>/topics/')
+def topics(wiki_id):
+    global WIKI_ID, WIKI_API_DATA, WIKI_AUTHORITY_DATA, POOL
+    configure_wiki_id(wiki_id)
+
+    topics = WikiTopicsToAuthorityService().get_value(wiki_id)
+    top_topics = [dict(topic=topic, authority=data['authority'], authors=data['authors'])
+                  for topic, data in sorted(topics, key=lambda x: x[1]['authority'], reverse=True)[:10]]
+
+    return render_template('topics.html', topics=top_topics, wiki_api_data=WIKI_API_DATA)
+
+
+
 @app.route('/<wiki_id>/authors/')
 def authors(wiki_id):
     global WIKI_ID, WIKI_API_DATA, WIKI_AUTHORITY_DATA, POOL
@@ -57,27 +71,27 @@ def authors(wiki_id):
     topic_authority_data = WikiAuthorTopicAuthorityService().get_value(wiki_id)
 
     authors_to_topics = sorted(topic_authority_data['weighted'].items(),
-                               key=lambda x: sum(x[1].values()),
+                               key=lambda y: sum(y[1].values()),
                                reverse=True)[:10]
 
     a2ids = WikiAuthorsToIdsService().get_value(wiki_id)
 
-    authors = dict([(x[0], dict(name=x[0],
-                                total_authority=sum(x[1].values()),
-                                topics=sorted(x[1].items(), key=lambda x: x[1], reverse=True)[:5]))
-                    for x in authors_to_topics])
+    authors_dict = dict([(x[0], dict(name=x[0],
+                                     total_authority=sum(x[1].values()),
+                                     topics=sorted(x[1].items(), key=lambda x: x[1], reverse=True)[:10]))
+                         for x in authors_to_topics])
 
     user_api_data = requests.get(WIKI_API_DATA['url']+'/api/v1/User/Details',
                                  params={'ids': ','.join([str(a2ids[user]) for user, contribs in authors_to_topics]),
                                  'format': 'json'}).json()['items']
 
     for user_data in user_api_data:
-        authors[user_data['name']].update(user_data)
-        authors[user_data['name']]['url'] = authors[user_data['name']]['url'][1:]
+        authors_dict[user_data['name']].update(user_data)
+        authors_dict[user_data['name']]['url'] = authors_dict[user_data['name']]['url'][1:]
 
-    authors = sorted(authors.values(), key=lambda x: x['total_authority'], reverse=True)
+    author_objects = sorted(authors_dict.values(), key=lambda z: z['total_authority'], reverse=True)
 
-    return render_template('authors.html', authors=authors, wiki_api_data=WIKI_API_DATA)
+    return render_template('authors.html', authors=author_objects, wiki_api_data=WIKI_API_DATA)
 
 
 @app.route('/<wiki_id>/<page>/')
