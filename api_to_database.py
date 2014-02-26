@@ -3,6 +3,7 @@ from lxml import html
 from lxml.etree import ParserError
 from pygraph.classes.digraph import digraph
 from pygraph.algorithms.pagerank import pagerank
+from wikia_authority import MinMaxScaler
 import json
 import requests
 import sys
@@ -31,31 +32,18 @@ smoothing = 0.001
 
 
 class Unbuffered:
-   def __init__(self, stream):
-       self.stream = stream
-   def write(self, data):
-       self.stream.write(data)
-       self.stream.flush()
-   def __getattr__(self, attr):
-       return getattr(self.stream, attr)
 
-sys.stdout=Unbuffered(sys.stdout)
+    def __init__(self, stream):
+        self.stream = stream
 
+    def write(self, data):
+        self.stream.write(data)
+        self.stream.flush()
 
-class MinMaxScaler:
-    """
-    Scales values from 0 to 1 by default
-    """
+    def __getattr__(self, attr):
+        return getattr(self.stream, attr)
 
-    def __init__(self, vals, enforced_min=0, enforced_max=1):
-        self.min = min(vals)
-        self.max = max(vals)
-        self.enforced_min = enforced_min
-        self.enforced_max = enforced_max
-
-    def scale(self, val):
-        return (((self.enforced_max - self.enforced_min) * (val - self.min))
-                / (self.max - self.min)) + self.enforced_min
+sys.stdout = Unbuffered(sys.stdout)
 
 
 # multiprocessing's gotta grow up and let me do anonymous functions
