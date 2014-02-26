@@ -13,7 +13,7 @@ itsdangerous==0.23
 lxml==3.2.5
 mock==1.0.1
 mrg-utils==0.0.1
--e git+https://github.com/relwell/nlp_services.git@a3c8f1af2d0028af70c8288f96498b13d3dd3cc2#egg=nlp_services-master
+-e git+https://github.com/relwell/nlp_services.git@a3c8f1af2d0028af70c8288f96498b13d3dd3cc2#egg=nlp_services-0.0.1
 nltk==2.0.4
 numpy==1.8.0
 phpserialize==1.3
