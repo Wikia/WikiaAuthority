@@ -14,7 +14,7 @@ use_caching()
 def update_top_page(args):
     wiki_id, top_page = args
     no_image_url = ("http://slot1.images.wikia.nocookie.net/__cb62407/"
-                    +"common/extensions/wikia/Search/images/wiki_image_placeholder.png")
+                    + "common/extensions/wikia/Search/images/wiki_image_placeholder.png")
     if top_page.get('thumbnail') is None:
         top_page['thumbnail'] = no_image_url
     top_page['entities'] = CombinedWikiPageEntitiesService().get_value(wiki_id+'_'+str(top_page['id']))
@@ -54,7 +54,6 @@ def topics(wiki_id):
                   for topic, data in sorted(topics, key=lambda x: x[1]['authority'], reverse=True)[:10]]
 
     return render_template('topics.html', topics=top_topics, wiki_api_data=WIKI_API_DATA)
-
 
 
 @app.route('/<wiki_id>/authors/')
@@ -123,7 +122,6 @@ def main():
     parser.add_argument('--port', dest='port', action='store', default=5000, type=int,
                         help="App port")
     options = parser.parse_args()
-
 
     app.debug = True
     app.run(host=options.host, port=options.port)
