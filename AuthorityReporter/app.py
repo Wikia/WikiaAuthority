@@ -1,14 +1,7 @@
-from flask import Flask, request, render_template
+from flask import Flask, render_template
 import requests
-import sys
-import re
-import random
-import json
-import time
-import os
-import boto
 import argparse
-from nlp_services.authority import WikiAuthorityService, PageAuthorityService, WikiTopicAuthorityService
+from nlp_services.authority import WikiAuthorityService, PageAuthorityService
 from nlp_services.authority import WikiAuthorTopicAuthorityService, WikiAuthorsToIdsService
 from nlp_services.authority import WikiTopicsToAuthorityService
 from nlp_services.discourse.entities import CombinedWikiPageEntitiesService
@@ -20,9 +13,10 @@ use_caching()
 
 def update_top_page(args):
     wiki_id, top_page = args
-    NO_IMAGE_URL = "http://slot1.images.wikia.nocookie.net/__cb62407/common/extensions/wikia/Search/images/wiki_image_placeholder.png"
+    no_image_url = ("http://slot1.images.wikia.nocookie.net/__cb62407/"
+                    +"common/extensions/wikia/Search/images/wiki_image_placeholder.png")
     if top_page.get('thumbnail') is None:
-        top_page['thumbnail'] = NO_IMAGE_URL
+        top_page['thumbnail'] = no_image_url
     top_page['entities'] = CombinedWikiPageEntitiesService().get_value(wiki_id+'_'+str(top_page['id']))
     top_page['authorities'] = PageAuthorityService().get_value(wiki_id+'_'+str(top_page['id']))
     for author in top_page['authorities']:
@@ -78,7 +72,7 @@ def authors(wiki_id):
 
     authors_dict = dict([(x[0], dict(name=x[0],
                                      total_authority=sum(x[1].values()),
-                                     topics=sorted(x[1].items(), key=lambda x: x[1], reverse=True)[:10]))
+                                     topics=sorted(x[1].items(), key=lambda z: z[1], reverse=True)[:10]))
                          for x in authors_to_topics])
 
     user_api_data = requests.get(WIKI_API_DATA['url']+'/api/v1/User/Details',
@@ -100,7 +94,7 @@ def index(wiki_id, page):
     global WIKI_ID, WIKI_API_DATA, WIKI_AUTHORITY_DATA, POOL
     configure_wiki_id(wiki_id)
 
-    top_docs = sorted(WIKI_AUTHORITY_DATA.items(), key=lambda x: x[1], reverse=True)
+    top_docs = sorted(WIKI_AUTHORITY_DATA.items(), key=lambda z: z[1], reverse=True)
     top_page_tups = [(tup[0].split('_')[-1], tup[1]) for tup in top_docs[(page-1)*10:page*10]]
 
     page_api_data = requests.get(WIKI_API_DATA['url'].split('/wiki')[0]+'/api/v1/Articles/Details',
