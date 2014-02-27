@@ -129,11 +129,15 @@ def main():
         authors_sheet.write(i+1, 0, author['name'])
         authors_sheet.write(i+1, 1, scaler.scale(author['total_authority']))
         for rank, topic in enumerate(author['topics'][:10]):
+            if pivot_counter > 65000:
+                break
             authors_topics_sheet.write(pivot_counter, 0, author['name'])
             authors_topics_sheet.write(pivot_counter, 1, topic[0])
             authors_topics_sheet.write(pivot_counter, 2, rank+1)
             authors_topics_sheet.write(pivot_counter, 3, topic[1])
             pivot_counter += 1
+        if i > 65000:
+            break
 
     print "Writing Topic Data"
     topics_sheet = workbook.add_sheet("Topics by Authority")
