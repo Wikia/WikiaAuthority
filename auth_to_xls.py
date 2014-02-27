@@ -1,6 +1,7 @@
 import argparse
 import requests
 import xlwt
+from collections import defaultdict
 from wikia_authority import MinMaxScaler
 from nlp_services.caching import use_caching
 from nlp_services.authority import WikiAuthorityService, WikiTopicsToAuthorityService, WikiAuthorTopicAuthorityService
@@ -56,10 +57,11 @@ def get_author_authority(api_data):
 
     a2ids = WikiAuthorsToIdsService().get_value(str(api_data['id']))
 
-    authors_dict = dict([(x[0], dict(name=x[0],
-                                     total_authority=sum(x[1].values()),
-                                     topics=sorted(x[1].items(), key=lambda z: z[1], reverse=True)))
-                         for x in authors_to_topics])
+    authors_dict = defaultdict(dict)
+    authors_dict.update(dict([(x[0], dict(name=x[0],
+                                          total_authority=sum(x[1].values()),
+                                          topics=sorted(x[1].items(), key=lambda z: z[1], reverse=True)))
+                              for x in authors_to_topics]))
 
     user_strs = [str(a2ids[user]) for user, contribs in authors_to_topics]
     user_api_data = []
