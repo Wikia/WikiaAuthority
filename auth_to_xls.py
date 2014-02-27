@@ -153,11 +153,16 @@ def main():
         topics_sheet.write(i+1, 1, scaler.scale(topic[1]['authority']))
         authors = topic[1]['authors']
         for rank, author in enumerate(authors[:10]):
+            if pivot_counter > 65000:
+                break
             topics_authors_sheet.write(pivot_counter, 0, topic[0])
             topics_authors_sheet.write(pivot_counter, 1, author['author'])
             topics_authors_sheet.write(pivot_counter, 2, rank+1)
             topics_authors_sheet.write(pivot_counter, 3, author['topic_authority'])
             pivot_counter += 1
+
+        if i > 65000:
+            break
 
     print "Saving to Excel"
     fname = "%s-authority-data-%d.xls" % (args.wiki_id, datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M'))
