@@ -102,6 +102,8 @@ def main():
     pages, authorities = zip(*page_authority)
     scaler = MinMaxScaler(authorities, enforced_min=0, enforced_max=100)
     for i, page in enumerate(pages):
+        if i > 65000:
+            break
         pages_sheet.write(i+1, 0, page)
         pages_sheet.write(i+1, 1, scaler.scale(authorities[i]))
 
