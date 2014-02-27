@@ -177,6 +177,8 @@ def main():
         k = bucket.new_key('authority/%s/%s' % (args.wiki_id, fname))
         k.set_contents_from_fiename(fname)
 
+    print fname
+
 
 if __name__ == '__main__':
     main()
