@@ -17,7 +17,7 @@ def get_args():
                     help="The ID of the wiki ")
     ap.add_argument('--num-processes', dest="num_processes", default=96,
                     help="Number of processes to run to compute this shiz")
-    ap.add_argument('--send-to-s3', dest="send_to_s3", action="store_bool", default=False,
+    ap.add_argument('--send-to-s3', dest="send_to_s3", action="store_true", default=False,
                     help="Whether to upload the spreadsheet to S3")
     return ap.parse_args()
 
