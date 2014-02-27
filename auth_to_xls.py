@@ -105,15 +105,21 @@ def main():
 
     authors_topics_sheet = workbook.add_sheet("Topics for Best Authors")
     authors_topics_sheet.write(0, 0, "Author")
-    authors_topics_sheet.write(0, 1, "Topics")
+    authors_topics_sheet.write(0, 1, "Topic")
+    authors_topics_sheet.write(0, 2, "Rank")
+    authors_topics_sheet.write(0, 3, "Score")
 
     scaler = MinMaxScaler([author['total_authority'] for author in author_authority], enforced_min=0, enforced_max=100)
+    pivot_counter = 1
     for i, author in enumerate(author_authority):
         authors_sheet.write(i+1, 0, author['name'])
         authors_sheet.write(i+1, 1, scaler.scale(author['total_authority']))
-        authors_topics_sheet.write(i+1, 0, author['name'])
-        for j, topic in enumerate(author['topics'][:10]):
-            authors_topics_sheet.write(i+1, j+1, "%s (%f)" % (author['topics'][j][0], author['topics'][j][1]))
+        for rank, topic in enumerate(author['topics'][:10]):
+            authors_topics_sheet.write(pivot_counter, 0, author['name'])
+            authors_topics_sheet.write(pivot_counter, 1, topic[0])
+            authors_topics_sheet.write(pivot_counter, 2, rank+1)
+            authors_topics_sheet.write(pivot_counter, 3, topic[1])
+            pivot_counter += 1
 
     print "Writing Topic Data"
     topics_sheet = workbook.add_sheet("Topics by Authority")
@@ -122,17 +128,22 @@ def main():
 
     topics_authors_sheet = workbook.add_sheet("Authors for Best Topics")
     topics_authors_sheet.write(0, 0, "Topic")
-    topics_authors_sheet.write(0, 1, "Authors")
+    topics_authors_sheet.write(0, 1, "Author")
+    topics_authors_sheet.write(0, 2, "Rank")
+    topics_authors_sheet.write(0, 3, "Authority")
 
     scaler = MinMaxScaler([x[1]['authority'] for x in topic_authority], enforced_min=0, enforced_max=100)
+    pivot_counter = 1
     for i, topic in enumerate(topic_authority):
         topics_sheet.write(i+1, 0, topic[0])
         topics_sheet.write(i+1, 1, scaler.scale(topic[1]['authority']))
-        topics_authors_sheet.write(i+1, 0, topic[0])
-
         authors = topic[1]['authors']
-        for j, author in enumerate(authors[:10]):
-            topics_authors_sheet.write(i+1, j+1, "%s (%f)" % (author['author'], author['topic_authority']))
+        for rank, author in enumerate(authors[:10]):
+            topics_authors_sheet.write(pivot_counter, 0, topic[0])
+            topics_authors_sheet.write(pivot_counter, 1, author['author'])
+            topics_authors_sheet.write(pivot_counter, 2, rank+1)
+            topics_authors_sheet.write(pivot_counter, 3, author['topic_authority'])
+            pivot_counter += 1
 
     print "Saving to Excel"
     workbook.save("%s-authority-data.xls" % args.wiki_id)
