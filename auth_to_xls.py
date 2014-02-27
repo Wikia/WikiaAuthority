@@ -33,13 +33,15 @@ def get_api_data(wiki_id):
 
 def get_page_authority(api_data):
     num_pages = api_data['stats']['articles']
-    print "Getting title data for %d pages" % num_pages
+    print "Getting Title Data for %d Pages" % num_pages
     page_ids_to_title = {}
     for obj in load_title_list_for_wiki(api_data['url'], max_pages=num_pages):
         page_ids_to_title[obj['id']] = obj['title']
 
-    print "Getting authority data"
+    print "Getting Authority Data"
     authority_data = WikiAuthorityService().get_value(str(api_data['id']))
+
+    print "Cross-Referencing Authority Data"
     return sorted([(page_ids_to_title[int(z[0].split('_')[-1])], z[1])
                    for z in authority_data.items() if int(z[0].split('_')[-1]) in page_ids_to_title],
                   key=lambda y: y[1], reverse=True)
@@ -72,25 +74,67 @@ def get_author_authority(api_data):
 
 
 def main():
-    use_caching()
     args = get_args()
     api_data = get_api_data(args.wiki_id)
-    sorted(WikiTopicsToAuthorityService().get_value(str(api_data['id'])), key=lambda x: x[1]['authority'])
 
     workbook = xlwt.Workbook()
     pages_sheet = workbook.add_sheet("Pages by Authority")
     pages_sheet.write(0, 0, "Page")
     pages_sheet.write(0, 1, "Authority")
 
-    for page in get_page_authority(api_data):
+    print "Getting Page Data..."
+    page_authority = get_page_authority(api_data)
 
+    print "Writing Page Data..."
+    pages, authorities = zip(*page_authority)
+    scaler = MinMaxScaler(authorities, enforced_min=0, enforced_max=100)
+    for i, page in enumerate(pages):
+        pages_sheet.write(i+1, 0, page)
+        pages_sheet.write(i+1, 1, scaler.scale(authorities[i]))
+
+    print "Getting Author and Topic Data..."
+    author_authority = get_author_authority(api_data)
+    topic_authority = sorted(WikiTopicsToAuthorityService().get_value(args.wiki_id),
+                             key=lambda y: y[1]['authority'], reverse=True)
+
+    print "Writing Author Data..."
     authors_sheet = workbook.add_sheet("Authors by Authority")
-    authors_sheet = workbook.add_sheet("Topics for Best Authors")
+    authors_sheet.write(0, 0, "Author")
+    authors_sheet.write(0, 1, "Authority")
+
+    authors_topics_sheet = workbook.add_sheet("Topics for Best Authors")
+    authors_topics_sheet.write(0, 0, "Author")
+    authors_topics_sheet.write(0, 1, "Topics")
+
+    scaler = MinMaxScaler([author['total_authority'] for author in author_authority], enforced_min=0, enforced_max=100)
+    for i, author in enumerate(author_authority):
+        authors_sheet.write(i+1, 0, author['name'])
+        authors_sheet.write(i+1, 1, scaler.scale(author['total_authority']))
+        authors_topics_sheet.write(i+1, 0, author['name'])
+        for j, topic in enumerate(author['topics'][:10]):
+            authors_topics_sheet.write(i+1, j+1, "%s (%f)" % (author['topics'][j][0], author['topics'][j][1]))
+
+    print "Writing Topic Data"
     topics_sheet = workbook.add_sheet("Topics by Authority")
+    topics_sheet.write(0, 0, "Topic")
+    topics_sheet.write(0, 1, "Authority")
+
     topics_authors_sheet = workbook.add_sheet("Authors for Best Topics")
+    topics_authors_sheet.write(0, 0, "Topic")
+    topics_authors_sheet.write(0, 1, "Authors")
 
+    scaler = MinMaxScaler([x[1]['authority'] for x in topic_authority], enforced_min=0, enforced_max=100)
+    for i, topic in enumerate(topic_authority):
+        topics_sheet.write(i+1, 0, topic[0])
+        topics_sheet.write(i+1, 1, scaler.scale(topic[1]['authority']))
+        topics_authors_sheet.write(i+1, 0, topic[0])
 
+        authors = topic[1]['authors']
+        for j, author in enumerate(authors[:10]):
+            topics_authors_sheet.write(i+1, j+1, "%s (%f)" % (author['author'], author['topic_authority']))
 
+    print "Saving to Excel"
+    workbook.save("%s-authority-data.xls" % args.wiki_id)
 
 
 if __name__ == '__main__':
