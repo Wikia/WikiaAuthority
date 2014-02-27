@@ -74,6 +74,7 @@ def get_author_authority(api_data):
 
 
 def main():
+    use_caching()
     args = get_args()
     api_data = get_api_data(args.wiki_id)
 
