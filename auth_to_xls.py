@@ -76,8 +76,9 @@ def get_author_authority(api_data):
                                       'format': 'json'}).json()['items']
 
     for user_data in user_api_data:
-        authors_dict[user_data['name']].update(user_data)
-        authors_dict[user_data['name']]['url'] = authors_dict[user_data['name']]['url'][1:]
+        if user_data['name'] in authors_dict:
+            authors_dict[user_data['name']].update(user_data)
+            authors_dict[user_data['name']]['url'] = authors_dict[user_data['name']]['url'][1:]
 
     author_objects = sorted(authors_dict.values(), key=lambda z: z.get('total_authority', 0), reverse=True)
     return author_objects
@@ -121,11 +122,11 @@ def main():
     authors_topics_sheet.write(0, 3, "Score")
 
     # why is total_authority not there?
-    scaler = MinMaxScaler([author.get('total_authority', 0) for author in author_authority], enforced_min=0, enforced_max=100)
+    all_total_authorities = [author.get('total_authority', 0) for author in author_authority]
+    scaler = MinMaxScaler(all_total_authorities, enforced_min=0, enforced_max=100)
     pivot_counter = 1
     for i, author in enumerate(author_authority):
         authors_sheet.write(i+1, 0, author['name'])
-        print author
         authors_sheet.write(i+1, 1, scaler.scale(author['total_authority']))
         for rank, topic in enumerate(author['topics'][:10]):
             authors_topics_sheet.write(pivot_counter, 0, author['name'])
