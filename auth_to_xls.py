@@ -61,9 +61,12 @@ def get_author_authority(api_data):
                                      topics=sorted(x[1].items(), key=lambda z: z[1], reverse=True)))
                          for x in authors_to_topics])
 
-    user_api_data = requests.get(api_data['url']+'/api/v1/User/Details',
-                                 params={'ids': ','.join([str(a2ids[user]) for user, contribs in authors_to_topics]),
-                                 'format': 'json'}).json()['items']
+    user_strs = [str(a2ids[user]) for user, contribs in authors_to_topics]
+    user_api_data = []
+    for i in range(0, len(user_strs), 100):
+        user_api_data += requests.get(api_data['url']+'/api/v1/User/Details',
+                                      params={'ids': ','.join(user_strs[i:i+100]),
+                                      'format': 'json'}).json()['items']
 
     for user_data in user_api_data:
         authors_dict[user_data['name']].update(user_data)
