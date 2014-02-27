@@ -22,14 +22,19 @@ def get_args():
     return ap.parse_args()
 
 
-def load_title_list_for_wiki(wiki_url, limit=5000, offset=0, max_pages=None):
-    results = requests.get("%sapi/v1/Articles/List" % wiki_url,
-                           params={'limit': limit, 'offset': offset, 'namespaces': 0}).json()
-    items = results.get('items', [])
-    if len(items) < limit or limit+offset > max_pages:
-        return items
-    else:
-        return items + load_title_list_for_wiki(wiki_url, limit=limit, offset=offset+limit, max_pages=max_pages)
+def get_all_titles(api_url, apfrom=None, aplimit=500):
+    params = {'action': 'query', 'list': 'allpages', 'aplimit': aplimit,
+              'apfilterredir': 'nonredirects', 'format': 'json'}
+    if apfrom is not None:
+        params['apfrom'] = apfrom
+    resp = requests.get(api_url, params=params)
+    response = resp.json()
+    resp.close()
+    allpages = response.get('query', {}).get('allpages', [])
+    if 'query-continue' in response:
+        return allpages + get_all_titles(api_url,
+                                         apfrom=response['query-continue']['allpages']['apfrom'], aplimit=aplimit)
+    return allpages
 
 
 def get_api_data(wiki_id):
@@ -41,8 +46,8 @@ def get_page_authority(api_data):
     num_pages = api_data['stats']['articles']
     print "Getting Title Data for %d Pages" % num_pages
     page_ids_to_title = {}
-    for obj in load_title_list_for_wiki(api_data['url'], max_pages=num_pages):
-        page_ids_to_title[obj['id']] = obj['title']
+    for obj in get_all_titles(api_data['url']+"api.php"):
+        page_ids_to_title[obj['pageidid']] = obj['title']
 
     print "Getting Authority Data"
     authority_data = WikiAuthorityService().get_value(str(api_data['id']))
