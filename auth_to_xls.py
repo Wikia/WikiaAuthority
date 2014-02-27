@@ -120,7 +120,8 @@ def main():
     authors_topics_sheet.write(0, 2, "Rank")
     authors_topics_sheet.write(0, 3, "Score")
 
-    scaler = MinMaxScaler([author['total_authority'] for author in author_authority], enforced_min=0, enforced_max=100)
+    # why is total_authority not there?
+    scaler = MinMaxScaler([author.get('total_authority', 0) for author in author_authority], enforced_min=0, enforced_max=100)
     pivot_counter = 1
     for i, author in enumerate(author_authority):
         authors_sheet.write(i+1, 0, author['name'])
@@ -143,7 +144,7 @@ def main():
     topics_authors_sheet.write(0, 2, "Rank")
     topics_authors_sheet.write(0, 3, "Authority")
 
-    scaler = MinMaxScaler([x[1]['authority'] for x in topic_authority], enforced_min=0, enforced_max=100)
+    scaler = MinMaxScaler([x[1].get('authority', 0) for x in topic_authority], enforced_min=0, enforced_max=100)
     pivot_counter = 1
     for i, topic in enumerate(topic_authority):
         topics_sheet.write(i+1, 0, topic[0])
