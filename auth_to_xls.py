@@ -29,7 +29,7 @@ def load_title_list_for_wiki(wiki_url, limit=5000, offset=0, max_pages=None):
     if len(items) < limit or limit+offset > max_pages:
         return items
     else:
-        return items + load_title_list_for_wiki(wiki_url, limit=limit, offset=offset+limit)
+        return items + load_title_list_for_wiki(wiki_url, limit=limit, offset=offset+limit, max_pages=max_pages)
 
 
 def get_api_data(wiki_id):
