@@ -47,7 +47,7 @@ def get_page_authority(api_data):
     print "Getting Title Data for %d Pages" % num_pages
     page_ids_to_title = {}
     for obj in get_all_titles(api_data['url']+"api.php"):
-        page_ids_to_title[obj['pageidid']] = obj['title']
+        page_ids_to_title[obj['pageid']] = obj['title']
 
     print "Getting Authority Data"
     authority_data = WikiAuthorityService().get_value(str(api_data['id']))
