@@ -1,9 +1,12 @@
 import argparse
 import requests
 import xlwt
+from datetime import datetime
+from boto import connect_s3
 from collections import defaultdict
 from wikia_authority import MinMaxScaler
 from nlp_services.caching import use_caching
+from nlp_services.pooling import set_global_num_processes
 from nlp_services.authority import WikiAuthorityService, WikiTopicsToAuthorityService, WikiAuthorTopicAuthorityService
 from nlp_services.authority import WikiAuthorsToIdsService
 
@@ -12,8 +15,10 @@ def get_args():
     ap = argparse.ArgumentParser()
     ap.add_argument('--wiki-id', dest="wiki_id", required=True,
                     help="The ID of the wiki ")
-    ap.add_argument('--num_processes', dest="num_processes", default=96,
+    ap.add_argument('--num-processes', dest="num_processes", default=96,
                     help="Number of processes to run to compute this shiz")
+    ap.add_argument('--send-to-s3', dest="send_to_s3", action="store_bool", default=False,
+                    help="Whether to upload the spreadsheet to S3")
     return ap.parse_args()
 
 
@@ -74,13 +79,14 @@ def get_author_authority(api_data):
         authors_dict[user_data['name']].update(user_data)
         authors_dict[user_data['name']]['url'] = authors_dict[user_data['name']]['url'][1:]
 
-    author_objects = sorted(authors_dict.values(), key=lambda z: z['total_authority'], reverse=True)
+    author_objects = sorted(authors_dict.values(), key=lambda z: z.get('total_authority', 0), reverse=True)
     return author_objects
 
 
 def main():
     use_caching()
     args = get_args()
+    set_global_num_processes(args.num_processes)
     api_data = get_api_data(args.wiki_id)
 
     workbook = xlwt.Workbook()
@@ -151,7 +157,13 @@ def main():
             pivot_counter += 1
 
     print "Saving to Excel"
-    workbook.save("%s-authority-data.xls" % args.wiki_id)
+    fname = "%s-authority-data-%d.xls" % (args.wiki_id, datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M'))
+    workbook.save(fname)
+
+    if args.send_to_s3:
+        bucket = connect_s3().get_bucket('nlp-data')
+        k = bucket.new_key('authority/%s/%s' % (args.wiki_id, fname))
+        k.set_contents_from_fiename(fname)
 
 
 if __name__ == '__main__':
