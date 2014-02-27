@@ -125,6 +125,7 @@ def main():
     pivot_counter = 1
     for i, author in enumerate(author_authority):
         authors_sheet.write(i+1, 0, author['name'])
+        print author
         authors_sheet.write(i+1, 1, scaler.scale(author['total_authority']))
         for rank, topic in enumerate(author['topics'][:10]):
             authors_topics_sheet.write(pivot_counter, 0, author['name'])
