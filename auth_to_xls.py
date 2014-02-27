@@ -165,7 +165,7 @@ def main():
             break
 
     print "Saving to Excel"
-    fname = "%s-authority-data-%d.xls" % (str(args.wiki_id), datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M'))
+    fname = "%s-authority-data-%s.xls" % (args.wiki_id, datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M'))
     workbook.save(fname)
 
     if args.send_to_s3:
