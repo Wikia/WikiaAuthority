@@ -176,7 +176,9 @@ def main():
             break
 
     print "Saving to Excel"
-    fname = "%s-authority-data-%s.xls" % (args.wiki_id, datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M'))
+    wiki_name = api_data['url'].replace('http://', '').replace('.wikia.com/', '')
+    fname = "%s-%s-authority-data-%s.xls" % (args.wiki_id, wiki_name,
+                                             datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M'))
     workbook.save(fname)
 
     if args.send_to_s3:
