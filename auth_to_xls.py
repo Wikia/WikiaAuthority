@@ -59,20 +59,25 @@ def get_page_authority(api_data):
 
 
 def get_author_authority(api_data):
+    print "Getting Topic Authority"
     topic_authority_data = WikiAuthorTopicAuthorityService().get_value(str(api_data['id']))
 
+    print "Correlating Authors to Topics"
     authors_to_topics = sorted(topic_authority_data['weighted'].items(),
                                key=lambda y: sum(y[1].values()),
                                reverse=True)
 
+    print "Correlating Authors to IDs"
     a2ids = WikiAuthorsToIdsService().get_value(str(api_data['id']))
 
+    print "Authors to Topics to ID"
     authors_dict = defaultdict(dict)
     authors_dict.update(dict([(x[0], dict(name=x[0],
                                           total_authority=sum(x[1].values()),
                                           topics=sorted(x[1].items(), key=lambda z: z[1], reverse=True)))
                               for x in authors_to_topics]))
 
+    print "Getting Author Data from API"
     user_strs = [str(a2ids[user]) for user, contribs in authors_to_topics]
     user_api_data = []
     for i in range(0, len(user_strs), 100):
@@ -80,11 +85,13 @@ def get_author_authority(api_data):
                                       params={'ids': ','.join(user_strs[i:i+100]),
                                       'format': 'json'}).json()['items']
 
+    print "Adding that Data"
     for user_data in user_api_data:
         if user_data['name'] in authors_dict:
             authors_dict[user_data['name']].update(user_data)
             authors_dict[user_data['name']]['url'] = authors_dict[user_data['name']]['url'][1:]
 
+    print "Sorting Author Objects"
     author_objects = sorted(authors_dict.values(), key=lambda z: z.get('total_authority', 0), reverse=True)
     return author_objects
 
