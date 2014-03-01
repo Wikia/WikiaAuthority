@@ -183,7 +183,7 @@ def main():
             break
 
     print "Saving to Excel"
-    wiki_name = api_data['url'].replace('http://', '').replace('.wikia.com/', '')
+    wiki_name = api_data['url'].replace('http://', '').replace('.wikia', '').replace('.com/', '')
     fname = "%s-%s-authority-data-%s.xls" % (args.wiki_id, wiki_name,
                                              datetime.strftime(datetime.now(), '%Y-%m-%d-%H-%M'))
     workbook.save(fname)
