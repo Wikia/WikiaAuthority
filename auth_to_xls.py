@@ -97,7 +97,7 @@ def get_author_authority(api_data):
 
 
 def main():
-    use_caching(per_service_cache={'WikiPageToEntitiesService.get': {'write_only': True}})
+    use_caching()
     args = get_args()
     set_global_num_processes(args.num_processes)
     api_data = get_api_data(args.wiki_id)
