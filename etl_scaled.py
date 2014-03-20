@@ -1,7 +1,8 @@
 import subprocess
 import sys
 from argparse import ArgumentParser, FileType
-from boto import connect_s3
+from boto import connect_s3, connect_ec2
+from boto.utils import get_instance_metadata
 
 
 class Unbuffered:
@@ -22,6 +23,7 @@ def get_args():
     ap.add_argument('--infile', dest='infile', type=FileType('r'))
     ap.add_argument('--s3file', dest='s3file')
     ap.add_argument('--overwrite', dest='overwrite', action='store_true', default=False)
+    ap.add_argument('--die-on-complete', dest='die_on_complete', action='store_true', default=False)
     return ap.parse_args()
 
 
@@ -49,6 +51,11 @@ def main():
         except Exception as e:
             print e
             failed_events.write(line)
+
+    if args.die_on_complete:
+        current_id = get_instance_metadata()['instance-id']
+        ec2_conn = connect_ec2()
+        ec2_conn.terminate_instances([current_id])
 
 
 if __name__ == '__main__':
