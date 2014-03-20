@@ -59,12 +59,12 @@ def main():
             failed_events.write(line)
 
         if args.emit_events and len(events) >= args.event_size:
-            keyname = 'authority_extraction_events/'+random.randint(0, 100000000)
+            keyname = 'authority_extraction_events/%d' % random.randint(0, 100000000)
             bucket.new_key(keyname).set_contents_from_string("\n".join(events))
             events = []
 
     if args.emit_events and len(events) > 0:
-        keyname = 'authority_extraction_events/'+random.randint(0, 100000000)
+        keyname = 'authority_extraction_events/%d' % random.randint(0, 100000000)
         bucket.new_key(keyname).set_contents_from_string("\n".join(events))
 
     if args.s3file:
