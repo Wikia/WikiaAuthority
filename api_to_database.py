@@ -293,7 +293,7 @@ def get_title_top_authors(all_titles, all_revisions):
     r.wait()
     if len(title_top_authors) == 0:
         print r.get()
-        sys.exit()
+        sys.exit(1)
     
     contribs_scaler = MinMaxScaler([author['contribs']
                                 for title in title_top_authors
@@ -321,7 +321,7 @@ resp = requests.get('http://www.wikia.com/api/v1/Wikis/Details', params={'ids': 
 items = resp.json()['items']
 if wiki_id not in items:
     print "Wiki doesn't exist?"
-    sys.exit()
+    sys.exit(1)
 wiki_data = items[wiki_id]
 resp.close()
 print wiki_data['title']
