@@ -1,5 +1,6 @@
 import subprocess
 import sys
+import random
 from argparse import ArgumentParser, FileType
 from boto import connect_s3, connect_ec2
 from boto.utils import get_instance_metadata
@@ -24,6 +25,8 @@ def get_args():
     ap.add_argument('--s3file', dest='s3file')
     ap.add_argument('--overwrite', dest='overwrite', action='store_true', default=False)
     ap.add_argument('--die-on-complete', dest='die_on_complete', action='store_true', default=False)
+    ap.add_argument('--emit-events', dest='emit_events', action='store_true', default=False)
+    ap.add_argument('--event-size', dest='event_size', type=int, default=10)
     return ap.parse_args()
 
 
@@ -40,17 +43,24 @@ def main():
     else:
         fl = args.infile
 
+    events = []
     for line in fl:
-        key = bucket.get_key(key_name='service_responses/%s/WikiAuthorityService.get' % line.strip())
+        wid = line.strip()
+        key = bucket.get_key(key_name='service_responses/%s/WikiAuthorityService.get' % wid)
         if (not args.overwrite) and (key is not None and key.exists()):
-            print "Key exists for", line.strip()
+            print "Key exists for", wid
             continue
-        print "Wiki ", line.strip()
+        print "Wiki ", wid
         try:
-            print subprocess.call("python api_to_database.py --wiki-id=%s --processes=64" % line.strip(), shell=True)
+            print subprocess.call("python api_to_database.py --wiki-id=%s --processes=64" % wid, shell=True)
+            events.append(wid)
         except Exception as e:
             print e
             failed_events.write(line)
+
+        if args.emit_events and len(events) >= args.event_size:
+            bucket.new_key('authority_events/'+random.randint(0, 100000000)).set_contents_from_string("\n".join(events))
+            events = []
 
     if args.die_on_complete:
         current_id = get_instance_metadata()['instance-id']
