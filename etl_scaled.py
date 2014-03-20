@@ -62,6 +62,9 @@ def main():
             bucket.new_key('authority_events/'+random.randint(0, 100000000)).set_contents_from_string("\n".join(events))
             events = []
 
+    if args.emit_events and len(events) > 0:
+        bucket.new_key('authority_events/'+random.randint(0, 100000000)).set_contents_from_string("\n".join(events))
+
     if args.die_on_complete:
         current_id = get_instance_metadata()['instance-id']
         ec2_conn = connect_ec2()
