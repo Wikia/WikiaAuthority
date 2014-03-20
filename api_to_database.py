@@ -318,7 +318,11 @@ minimum_contribution_pct = 0.01
 
 # get wiki info
 resp = requests.get('http://www.wikia.com/api/v1/Wikis/Details', params={'ids': wiki_id})
-wiki_data = resp.json()['items'][wiki_id]
+items = resp.json()['items']
+if wiki_id not in items:
+    print "Wiki doesn't exist?"
+    sys.exit()
+wiki_data = items[wiki_id]
 resp.close()
 print wiki_data['title']
 api_url = '%sapi.php' % wiki_data['url']
