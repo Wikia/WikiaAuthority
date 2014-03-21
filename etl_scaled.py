@@ -2,7 +2,8 @@ import subprocess
 import sys
 import random
 from argparse import ArgumentParser, FileType
-from boto import connect_s3, connect_ec2
+from boto import connect_s3
+from boto.ec2 import connect_to_region
 from boto.utils import get_instance_metadata
 
 
@@ -72,7 +73,7 @@ def main():
 
     if args.die_on_complete:
         current_id = get_instance_metadata()['instance-id']
-        ec2_conn = connect_ec2()
+        ec2_conn = connect_to_region('us-west-2')
         ec2_conn.terminate_instances([current_id])
 
 
