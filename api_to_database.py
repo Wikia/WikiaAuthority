@@ -4,6 +4,7 @@ from lxml.etree import ParserError
 from pygraph.classes.digraph import digraph
 from pygraph.algorithms.pagerank import pagerank
 from wikia_authority import MinMaxScaler
+import traceback
 import json
 import requests
 import sys
@@ -149,7 +150,7 @@ def get_contributing_authors_safe(arg_tuple):
     try:
         res = get_contributing_authors(arg_tuple)
     except Exception as e:
-        print arg_tuple, e
+        print e, traceback.format_exc()
         return str(wiki_id) + '_' + str(arg_tuple[0]['pageid']), []
     return res
 
@@ -158,7 +159,8 @@ def get_contributing_authors(arg_tuple):
     global minimum_authors, minimum_contribution_pct, smoothing, wiki_id
 
     #  within scope of map_async subprocess
-    requests.Session().mount('http://', requests.adapters.HTTPAdapter(pool_connections=1, pool_maxsize=1, pool_block=True))
+    requests.Session().mount('http://',
+                             requests.adapters.HTTPAdapter(pool_connections=1, pool_maxsize=1, pool_block=True))
 
     title_object, title_revs = arg_tuple
     doc_id = "%s_%s" % (str(wiki_id), title_object['pageid'])
