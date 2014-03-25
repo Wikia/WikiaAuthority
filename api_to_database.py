@@ -39,8 +39,6 @@ sys.stdout = Unbuffered(sys.stdout)
 def set_page_key(x):
     bucket = connect_s3().get_bucket('nlp-data')
     k = bucket.new_key(key_name='/service_responses/%s/PageAuthorityService.get' % (x[0].replace('_', '/')))
-    print '/service_responses/%s/PageAuthorityService.get' % (x[0].replace('_', '/'))
-    print json.dumps(x[1])
     k.set_contents_from_string(json.dumps(x[1], ensure_ascii=False))
     return True
 
@@ -99,7 +97,7 @@ def edit_distance(title_object, earlier_revision, later_revision, already_retrie
         resp = requests.get(api_url, params=params)
     except requests.exceptions.ConnectionError as e:
         if already_retried:
-            print "Gave up on some socket shit". e
+            print "Gave up on some socket shit", e
             return 0
         print "Fucking sockets"
         time.sleep(240)  # wait four minutes for your wimpy ass sockets to get their shit together
@@ -280,6 +278,7 @@ def get_title_top_authors(args, all_titles, all_revisions):
                        callback=title_top_authors.update)
     r.wait()
     if len(title_top_authors) == 0:
+        print "No title top authors for wiki", args.wiki_id
         print r.get()
         sys.exit(1)
     
@@ -329,7 +328,7 @@ def main():
     start = time.time()
 
     wiki_id = args.wiki_id
-    print "wiki id is", wiki_id
+    print "wiki id is", wiki_id,
 
     minimum_authors = 5
     minimum_contribution_pct = 0.01
@@ -383,7 +382,6 @@ def main():
         title_top_authors.items()
     )
     q.wait()
-    print q.get()
 
     print wiki_id, "finished in", time.time() - start, "seconds"
 
