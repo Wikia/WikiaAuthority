@@ -11,24 +11,13 @@ import multiprocessing
 import argparse
 import time
 
-try:
-    default_cpus = multiprocessing.cpu_count()
-except NotImplementedError:
-    default_cpus = 2   # arbitrary default
 
-parser = argparse.ArgumentParser(description='Get authoritativeness data for a given wiki.')
-parser.add_argument('--wiki-id', dest='wiki_id', action='store', required=True,
-                    help='The ID of the wiki you want to operate on')
-parser.add_argument('--processes', dest='processes', action='store', type=int, default=default_cpus,
-                    help='Number of processes you want to run at once')
-parser.add_argument('--test-run', dest='test_run', action='store_true', default=False,
-                    help='Test run (fewer computations)')
-options = parser.parse_args()
-
+minimum_authors = 5
+minimum_contribution_pct = 0.05
+smoothing = 0.05
+wiki_id = None
+api_url = None
 edit_distance_memoization_cache = {}
-test_run = options.test_run
-
-smoothing = 0.001
 
 
 class Unbuffered:
@@ -110,10 +99,10 @@ def edit_distance(title_object, earlier_revision, later_revision, already_retrie
         resp = requests.get(api_url, params=params)
     except requests.exceptions.ConnectionError as e:
         if already_retried:
-            print "Gave up on some socket shit"
+            print "Gave up on some socket shit". e
             return 0
         print "Fucking sockets"
-        time.sleep(240) # wait four minutes for your wimpy ass sockets to get their shit together
+        time.sleep(240)  # wait four minutes for your wimpy ass sockets to get their shit together
         return edit_distance(title_object, earlier_revision, later_revision, already_retried=True)
 
     response = resp.json()
@@ -197,7 +186,8 @@ def get_contributing_authors(arg_tuple):
                                  if title_revs[j].get('user', '') != curr_rev.get('user')]
         
         avg_edit_qty = (sum(map(lambda x: edit_quality(title_object, x[0], x[1]), non_author_revs_comps))
-                        / max(1, len(set([non_author_rev_cmp[1].get('user', '') for non_author_rev_cmp in non_author_revs_comps]))))
+                        / max(1, len(set([non_author_rev_cmp[1].get('user', '') for non_author_rev_cmp in
+                                          non_author_revs_comps]))))
         if avg_edit_qty == 0:
             avg_edit_qty = smoothing
         curr_rev['edit_longevity'] = avg_edit_qty * edit_dist
@@ -246,10 +236,9 @@ def links_for_page(title_object, plcontinue=None):
     return title_string, links
 
 
-def get_pagerank(titles):
-    global options
-    pool = multiprocessing.Pool(processes=options.processes)
-    r = pool.map_async(links_for_page, titles)
+def get_pagerank(args, all_titles):
+    pool = multiprocessing.Pool(processes=args.processes)
+    r = pool.map_async(links_for_page, all_titles)
     r.wait()
     all_links = r.get()
     all_title_strings = list(set([to_string for response in all_links for to_string in response[1]]
@@ -280,12 +269,11 @@ def author_centrality(titles_to_authors):
     centrality_scaler = MinMaxScaler(centralities.values())
 
     return dict([(cent_author, centrality_scaler.scale(cent_val))
-                  for cent_author, cent_val in centralities.items()])
+                 for cent_author, cent_val in centralities.items()])
 
 
-def get_title_top_authors(all_titles, all_revisions):
-    global options
-    pool = multiprocessing.Pool(processes=options.processes)
+def get_title_top_authors(args, all_titles, all_revisions):
+    pool = multiprocessing.Pool(processes=args.processes)
     title_top_authors = {}
     r = pool.map_async(get_contributing_authors_safe,
                        [(title_obj, all_revisions[title_obj['title']]) for title_obj in all_titles],
@@ -296,8 +284,8 @@ def get_title_top_authors(all_titles, all_revisions):
         sys.exit(1)
     
     contribs_scaler = MinMaxScaler([author['contribs']
-                                for title in title_top_authors
-                                for author in title_top_authors[title]])
+                                    for title in title_top_authors
+                                    for author in title_top_authors[title]])
     scaled_title_top_authors = {}
     for title, authors in title_top_authors.items():
         new_authors = []
@@ -308,78 +296,97 @@ def get_title_top_authors(all_titles, all_revisions):
     return scaled_title_top_authors
 
 
-start = time.time()
-
-wiki_id = options.wiki_id
-print "wiki id is", wiki_id
-
-minimum_authors = 5
-minimum_contribution_pct = 0.01
-
-# get wiki info
-resp = requests.get('http://www.wikia.com/api/v1/Wikis/Details', params={'ids': wiki_id})
-items = resp.json()['items']
-if wiki_id not in items:
-    print "Wiki doesn't exist?"
-    sys.exit(1)
-wiki_data = items[wiki_id]
-resp.close()
-print wiki_data['title']
-api_url = '%sapi.php' % wiki_data['url']
-
-# can't be parallelized since it's an enum
-all_titles = get_all_titles()
-print "Got %d titles" % len(all_titles)
-
-pool = multiprocessing.Pool(processes=options.processes)
-
-all_revisions = []
-r = pool.map_async(get_all_revisions, all_titles, callback=all_revisions.extend)
-r.wait()
-print "%d Revisions" % sum([len(revs) for title, revs in all_revisions])
-all_revisions = dict(all_revisions)
-
-title_top_authors = get_title_top_authors(all_titles, all_revisions)
-
-print time.time() - start
-
-centralities = author_centrality(title_top_authors)
-
-# this com_qscore_pr, the best metric per Qin and Cunningham
-comqscore_authority = dict([(doc_id,
-                             sum([author['contribs'] * centralities[author['user']]
-                                  for author in authors])
-                             ) for doc_id, authors in title_top_authors.items()])
-
-print "Got comsqscore, storing data"
-title_to_pageid = dict([(title_object['title'], title_object['pageid']) for title_object in all_titles])
-
-"""
-pr = dict([('%s_%s' % (str(wiki_id), title_to_pageid[title]), pagerank)
-           for title, pagerank in get_pagerank(all_titles).items() if title in title_to_pageid])
-
-print "Got PR"
-print "Finished getting all data, now storing it..."
-print time.time() - start
-"""
-
-bucket = connect_s3().get_bucket('nlp-data')
-key = bucket.new_key(key_name='service_responses/%s/WikiAuthorCentralityService.get' % wiki_id)
-key.set_contents_from_string(json.dumps(centralities, ensure_ascii=False))
-
-key = bucket.new_key(key_name='service_responses/%s/WikiAuthorityService.get' % wiki_id)
-key.set_contents_from_string(json.dumps(comqscore_authority, ensure_ascii=False))
-
-q = pool.map_async(
-    set_page_key, 
-    title_top_authors.items()
-)
-q.wait()
-print q.get()
-
-print wiki_id, "finished in", time.time() - start, "seconds"
+def get_pagerank_dict(all_titles):
+    title_to_pageid = dict([(title_object['title'], title_object['pageid']) for title_object in all_titles])
+    pr = dict([('%s_%s' % (str(wiki_id), title_to_pageid[title]), pagerank)
+               for title, pagerank in get_pagerank(all_titles).items() if title in title_to_pageid])
+    return pr
 
 
-#
-# key = bucket.new_key(key_name='service_responses/%s/WikiPageRankService.get')
-# key.set_contents_from_string(json.dumps(pr, ensure_ascii=False))
+def get_args():
+    try:
+        default_cpus = multiprocessing.cpu_count()
+    except NotImplementedError:
+        default_cpus = 2   # arbitrary default
+
+    parser = argparse.ArgumentParser(description='Get authoritativeness data for a given wiki.')
+    parser.add_argument('--wiki-id', dest='wiki_id', action='store', required=True,
+                        help='The ID of the wiki you want to operate on')
+    parser.add_argument('--processes', dest='processes', action='store', type=int, default=default_cpus,
+                        help='Number of processes you want to run at once')
+    return parser.parse_args()
+
+
+def main():
+    global minimum_authors, minimum_contribution_pct, smoothing, wiki_id, api_url, edit_distance_memoization_cache
+
+    args = get_args()
+
+    edit_distance_memoization_cache = {}
+
+    smoothing = 0.001
+
+    start = time.time()
+
+    wiki_id = args.wiki_id
+    print "wiki id is", wiki_id
+
+    minimum_authors = 5
+    minimum_contribution_pct = 0.01
+
+    # get wiki info
+    resp = requests.get('http://www.wikia.com/api/v1/Wikis/Details', params={'ids': wiki_id})
+    items = resp.json()['items']
+    if wiki_id not in items:
+        print "Wiki doesn't exist?"
+        sys.exit(1)
+    wiki_data = items[wiki_id]
+    resp.close()
+    print wiki_data['title']
+    api_url = '%sapi.php' % wiki_data['url']
+
+    # can't be parallelized since it's an enum
+    all_titles = get_all_titles()
+    print "Got %d titles" % len(all_titles)
+
+    pool = multiprocessing.Pool(processes=args.processes)
+
+    all_revisions = []
+    r = pool.map_async(get_all_revisions, all_titles, callback=all_revisions.extend)
+    r.wait()
+    print "%d Revisions" % sum([len(revs) for title, revs in all_revisions])
+    all_revisions = dict(all_revisions)
+
+    title_top_authors = get_title_top_authors(args, all_titles, all_revisions)
+
+    print time.time() - start
+
+    centralities = author_centrality(title_top_authors)
+
+    # this com_qscore_pr, the best metric per Qin and Cunningham
+    comqscore_authority = dict([(doc_id,
+                                 sum([author['contribs'] * centralities[author['user']]
+                                      for author in authors])
+                                 ) for doc_id, authors in title_top_authors.items()])
+
+    print "Got comsqscore, storing data"
+
+    bucket = connect_s3().get_bucket('nlp-data')
+    key = bucket.new_key(key_name='service_responses/%s/WikiAuthorCentralityService.get' % wiki_id)
+    key.set_contents_from_string(json.dumps(centralities, ensure_ascii=False))
+
+    key = bucket.new_key(key_name='service_responses/%s/WikiAuthorityService.get' % wiki_id)
+    key.set_contents_from_string(json.dumps(comqscore_authority, ensure_ascii=False))
+
+    q = pool.map_async(
+        set_page_key,
+        title_top_authors.items()
+    )
+    q.wait()
+    print q.get()
+
+    print wiki_id, "finished in", time.time() - start, "seconds"
+
+
+if __name__ == '__main__':
+    main()
