@@ -3,6 +3,7 @@ from lxml import html
 from lxml.etree import ParserError
 from pygraph.classes.digraph import digraph
 from pygraph.algorithms.pagerank import pagerank
+from pygraph.classes.exceptions import AdditionError
 from wikia_authority import MinMaxScaler
 import traceback
 import json
@@ -246,8 +247,12 @@ def get_pagerank(args, all_titles):
 
     wiki_graph = digraph()
     wiki_graph.add_nodes(all_title_strings)  # to prevent missing node_neighbors table
-    map(wiki_graph.add_edge,
-        [(title_object['title'], target) for title_object in all_titles for target in links_for_page(title_object)[1]])
+    for title_object in all_titles:
+        for target in links_for_page(title_object)[1]:
+            try:
+                wiki_graph.add_edge(title_object['title'], target)
+            except AdditionError:
+                pass
 
     return pagerank(wiki_graph)
 
@@ -258,10 +263,13 @@ def author_centrality(titles_to_authors):
     author_graph.add_nodes(list(set(['author_%s' % author['user']
                                      for authors in titles_to_authors.values()
                                      for author in authors])))
-    map(author_graph.add_edge,
-        [('title_%s' % title, 'author_%s' % author['user'])
-         for title in titles_to_authors
-         for author in titles_to_authors[title]])
+
+    for title in titles_to_authors:
+        for author in titles_to_authors[title]:
+            try:
+                author_graph.add_edge('title_%s' % title, 'author_%s' % author['user'])
+            except AdditionError:
+                pass
 
     centralities = dict([('_'.join(item[0].split('_')[1:]), item[1])
                          for item in pagerank(author_graph).items() if item[0].startswith('author_')])
