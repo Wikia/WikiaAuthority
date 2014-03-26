@@ -45,22 +45,24 @@ def set_page_key(x):
     return True
 
 
-def get_all_titles(apfrom=None, aplimit=500):
+def get_all_titles(aplimit=500):
     global api_url
     params = {u'action': u'query', u'list': u'allpages', u'aplimit': aplimit,
               u'apfilterredir': u'nonredirects', u'format': u'json'}
-    if apfrom is not None:
-        params[u'apfrom'] = apfrom
-    resp = requests.get(api_url, params=params)
-    response = resp.json()
-    resp.close()
-    allpages = response.get(u'query', {}).get(u'allpages', [])
-    if u'query-continue' in response:
-        return allpages + get_all_titles(apfrom=response[u'query-continue'][u'allpages'][u'apfrom'], aplimit=aplimit)
+    allpages = []
+    while True:
+        resp = requests.get(api_url, params=params)
+        response = resp.json()
+        resp.close()
+        allpages += response.get(u'query', {}).get(u'allpages', [])
+        if u'query-continue' in response:
+            params[u'apfrom'] = response[u'query-continue'][u'allpages'][u'apfrom']
+        else:
+            break
     return allpages
 
 
-def get_all_revisions(title_object, rvstartid=None):
+def get_all_revisions(title_object):
     global api_url
     title_string = title_object[u'title']
     params = {u'action': u'query',
@@ -70,16 +72,16 @@ def get_all_revisions(title_object, rvstartid=None):
               u'rvlimit': u'max',
               u'rvdir': u'newer',
               u'format': u'json'}
-    if rvstartid is not None:
-        params[u'rvstartid'] = rvstartid
-    resp = requests.get(api_url, params=params)
-    response = resp.json()
-    resp.close()
-    revisions = response.get(u'query', {}).get(u'pages', {0: {}}).values()[0].get(u'revisions', [])
-    if u'query-continue' in response:
-        return (title_string, (revisions
-                + get_all_revisions(title_object,
-                                    rvstartid=response[u'query-continue'][u'revisions'][u'rvstartid'])[1]))
+    revisions = []
+    while True:
+        resp = requests.get(api_url, params=params)
+        response = resp.json()
+        resp.close()
+        revisions += response.get(u'query', {}).get(u'pages', {0: {}}).values()[0].get(u'revisions', [])
+        if u'query-continue' in response:
+            params[u'rvstartid'] = response[u'query-continue'][u'revisions'][u'rvstartid']
+        else:
+            break
     return [title_string, revisions]
 
 
@@ -222,20 +224,23 @@ def get_contributing_authors(arg_tuple):
     return doc_id, top_authors
 
 
-def links_for_page(title_object, plcontinue=None):
+def links_for_page(title_object):
     global api_url
     title_string = title_object[u'title']
     params = {u'action': u'query', u'titles': title_string.encode(u'utf8'), u'plnamespace': 0,
               u'prop': u'links', u'pllimit': 500, u'format': u'json'}
-    if plcontinue is not None:
-        params[u'plcontinue'] = plcontinue
-    resp = requests.get(api_url, params=params)
-    response = resp.json()
-    resp.close()
-    links = [link[u'title'] for link in response.get(u'query', {}).get(u'pages', {0: {}}).values()[0].get(u'links', [])]
-    query_continue = response.get(u'query-continue', {}).get(u'links', {}).get(u'plcontinue')
-    if query_continue is not None:
-        return title_string, links + links_for_page(title_object, plcontinue=response[u'query-continue'])[1]
+    links = []
+    while True:
+        resp = requests.get(api_url, params=params)
+        response = resp.json()
+        resp.close()
+        response_links = response.get(u'query', {}).get(u'pages', {0: {}}).values()[0].get(u'links', [])
+        links += [link[u'title'] for link in response_links]
+        query_continue = response.get(u'query-continue', {}).get(u'links', {}).get(u'plcontinue')
+        if query_continue is not None:
+            params[u'plcontinue'] = query_continue
+        else:
+            break
     return title_string, links
 
 
