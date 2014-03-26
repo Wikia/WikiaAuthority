@@ -75,7 +75,12 @@ def get_all_revisions(title_object):
     revisions = []
     while True:
         resp = requests.get(api_url, params=params)
-        response = resp.json()
+        try:
+            response = resp.json()
+        except ValueError as e:
+            print e, traceback.format_exc()
+            print response.content
+            return revisions
         resp.close()
         revisions += response.get(u'query', {}).get(u'pages', {0: {}}).values()[0].get(u'revisions', [])
         if u'query-continue' in response:
@@ -108,7 +113,12 @@ def edit_distance(title_object, earlier_revision, later_revision, already_retrie
         time.sleep(240)  # wait four minutes for your wimpy ass sockets to get their shit together
         return edit_distance(title_object, earlier_revision, later_revision, already_retried=True)
 
-    response = resp.json()
+    try:
+        response = resp.json()
+    except ValueError as e:
+        print e, traceback.format_exc()
+        print resp.content
+        return 0
     resp.close()
     time.sleep(0.025)  # prophylactic throttling
     revision = (response.get(u'query', {})
@@ -232,7 +242,12 @@ def links_for_page(title_object):
     links = []
     while True:
         resp = requests.get(api_url, params=params)
-        response = resp.json()
+        try:
+            response = resp.json()
+        except ValueError as e:
+            print e, traceback.format_exc()
+            print resp.content
+            return links
         resp.close()
         response_links = response.get(u'query', {}).get(u'pages', {0: {}}).values()[0].get(u'links', [])
         links += [link[u'title'] for link in response_links]
@@ -406,5 +421,5 @@ def main():
 if __name__ == u'__main__':
     try:
         main()
-    except Exception as e:
-        print e, traceback.format_exc()
+    except Exception as exc:
+        print exc, traceback.format_exc()
