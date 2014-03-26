@@ -404,4 +404,7 @@ def main():
 
 
 if __name__ == u'__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        print e, traceback.format_exc()
