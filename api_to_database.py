@@ -272,7 +272,7 @@ def get_pagerank(args, all_titles):
     for title_object in all_titles:
         for target in links_for_page(title_object)[1]:
             try:
-                wiki_graph.add_edge(title_object[u'title'], target)
+                wiki_graph.add_edge((title_object[u'title'], target))
             except AdditionError:
                 pass
 
@@ -289,7 +289,7 @@ def author_centrality(titles_to_authors):
     for title in titles_to_authors:
         for author in titles_to_authors[title]:
             try:
-                author_graph.add_edge(u'title_%s' % title, u'author_%s' % author[u'user'])
+                author_graph.add_edge((u'title_%s' % title, u'author_%s' % author[u'user']))
             except AdditionError:
                 pass
 
