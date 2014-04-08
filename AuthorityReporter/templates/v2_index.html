@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Test Search App</title>
+    <!-- Bootstrap -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="/static/css/bootstrap-glyphicons.css" rel="stylesheet" media="screen">
+    <link href="/static/css/main.css" rel="stylesheet" media="screen">
+  </head>
+  <body class="container">
+    <script src="http://code.jquery.com/jquery.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="http://twitter.github.io/typeahead.js/releases/latest/typeahead.bundle.js"></script>
+    <script src="/wiki_autocomplete.js"></script>
+    <h1>Authority App</h1>
+    <div class="well">
+      <div class="row" id="wiki-picker">
+          <form action="#">
+              <input class="typeahead" type="text" placeholder="Pick a wiki">
+              <button type="submit" class="btn btn-default">Go</button>
+          </form>
+      </div>
+    </div>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $('#wiki-picker .typeahead').typeahead({
+              hint: true,
+              highlight: true,
+              local: Object.keys(wikis)
+            });
+
+            $('#wiki-picker form').on('submit', function(){
+                var dom = $(this);
+                dom.attr('action', '/wiki/'+wikis[dom.find('input').val()]);
+            });
+
+        });
+    </script>
+  </body>
+</html>
