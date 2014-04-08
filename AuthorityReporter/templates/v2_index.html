@@ -23,11 +23,11 @@
     </div>
     <script type="text/javascript">
         $(document).ready(function() {
-            $('#wiki-picker .typeahead').typeahead({
+            $('#wiki-picker .typeahead').typeahead([{
               hint: true,
               highlight: true,
               local: Object.keys(wikis)
-            });
+            }]);
 
             $('#wiki-picker form').on('submit', function(){
                 var dom = $(this);
