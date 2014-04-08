@@ -29,6 +29,7 @@ def update_top_page(arg_tuple):
 
 
 app = Flask(__name__)
+args = None
 
 POOL = Pool(processes=20)
 WIKI_ID = None
@@ -134,7 +135,7 @@ def index():
 
 
 def main():
-    global app
+    global app, args
     parser = add_db_arguments(argparse.ArgumentParser(description=u'Authority Flask App'))
     parser.add_argument(u'--app-host', dest=u'app_host', action=u'store', default=u'0.0.0.0',
                         help=u"App host")
