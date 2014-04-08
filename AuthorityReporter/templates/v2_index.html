@@ -39,6 +39,11 @@
               displayKey: 'value',
               source: wiki_names.ttAdapter()
             });
+
+            $('#wiki-picker form').on('submit', function(){
+                var dom = $(this);
+                dom.attr('action', '/wiki/'+wikis[$("#wiki-text-picker").val()]);
+            });
         });
     </script>
   </body>
