@@ -132,7 +132,7 @@ def page_index(wiki_id, page):
 
     if WIKI_API_DATA[u'url'].endswith(u'/'):
         WIKI_API_DATA[u'url'] = WIKI_API_DATA[u'url'][:-1]
-    return render_template(u'index.html', page=page, wiki_api_data=WIKI_API_DATA)
+    return render_template(u'page.html', page=page, wiki_api_data=WIKI_API_DATA)
 
 
 @app.route(u'/')
