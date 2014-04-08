@@ -45,6 +45,7 @@ def wiki(wiki_id):
     (wiki_title, wiki_url,) = cursor.fetchone()
     response = requests.get(wiki_url+u'api/v1/Articles/Details',
                             params=dict(ids=u','.join([str(a[0]) for a in id_to_authority]))).json()
+    print response.url
     page_data = dict(response.get(u'items', {}))
     pages = []
     for pageid, authority in id_to_authority:
