@@ -128,11 +128,11 @@ def page_index(wiki_id, page):
     global WIKI_ID, WIKI_API_DATA, WIKI_AUTHORITY_DATA, POOL
     configure_wiki_id(wiki_id)
 
-    WIKI_AUTHORITY_DATA.get(str(wiki_id)+u"_"+str(page), {})
+    page_data = WIKI_AUTHORITY_DATA.get(str(wiki_id)+u"_"+str(page), {})
 
     if WIKI_API_DATA[u'url'].endswith(u'/'):
         WIKI_API_DATA[u'url'] = WIKI_API_DATA[u'url'][:-1]
-    return render_template(u'page.html', page=page, wiki_api_data=WIKI_API_DATA)
+    return render_template(u'page.html', page_data=page_data, wiki_api_data=WIKI_API_DATA)
 
 
 @app.route(u'/')
