@@ -151,8 +151,6 @@ def page_index(wiki_id, page_id):
 
     page_title = u"TODO: GET PAGE TITLE FROM API"
 
-    (page_title,) = cursor.fetchall()
-
     return render_template(u'page.html', users=users_dict.values(), topics=page_topics,
                            wiki_api_data=WIKI_API_DATA, page_title=page_title)
 
