@@ -13,7 +13,7 @@ def get_args():
     ap = add_db_arguments(ArgumentParser())
     ap.add_argument(u'--app-host', dest=u'app_host', default=u'0.0.0.0')
     ap.add_argument(u'--app-port', dest=u'app_port', default=5000, type=int)
-    return ap.parse_args
+    return ap.parse_args()
 
 
 def main():
