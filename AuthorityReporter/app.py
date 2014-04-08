@@ -149,7 +149,8 @@ def page_index(wiki_id, page_id):
 
     page_topics = [{u'id': row[0], u'name': row[1]} for row in cursor.fetchall()]
 
-    cursor.execute(u"""SELECT title FROM articles WHERE article_id = %s AND wiki_id = %s""" % (page_id, wiki_id))
+    page_title = u"TODO: GET PAGE TITLE FROM API"
+
     (page_title,) = cursor.fetchall()
 
     return render_template(u'page.html', users=users_dict.values(), topics=page_topics,
