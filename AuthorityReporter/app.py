@@ -143,7 +143,7 @@ def main():
     options = parser.parse_args()
 
     app.debug = True
-    app.run(host=options.host, port=options.port)
+    app.run(host=options.app_host, port=options.app_port)
 
 
 if __name__ == u'__main__':
