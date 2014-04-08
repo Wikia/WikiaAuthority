@@ -45,11 +45,11 @@ def wiki(wiki_id):
     (wiki_title, wiki_url,) = cursor.fetchone()
     response = requests.get(wiki_url+u'api/v1/Articles/Details',
                             params=dict(ids=u','.join([str(a[0]) for a in id_to_authority])))
-    print response.url
+
     page_data = dict(response.json().get(u'items', {}))
     pages = []
     for pageid, authority in id_to_authority:
-        pages.append(dict(authority=authority, pageid=pageid, **page_data.get(pageid, {})))
+        pages.append(dict(authority=authority, pageid=pageid, **page_data.get(str(pageid), {})))
     return render_template(u'v2_wiki.html', pages=pages, wiki_url=wiki_url, wiki_title=wiki_title, wiki_id=wiki_id)
 
 
