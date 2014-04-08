@@ -47,10 +47,8 @@ def wiki(wiki_id):
                             params=dict(ids=u','.join([str(a[0]) for a in id_to_authority]))).json()
     page_data = dict(response.get(u'items', {}))
     pages = []
-    print page_data
     for pageid, authority in id_to_authority:
-        print page_data.get(pageid, {})
-        pages.append(dict(authority=authority, pageid=pageid, **vars(page_data.get(pageid, {}))))
+        pages.append(dict(authority=authority, pageid=pageid, **page_data.get(pageid, {})))
     return render_template(u'v2_wiki.html', pages=pages, wiki_url=wiki_url, wiki_title=wiki_title, wiki_id=wiki_id)
 
 
