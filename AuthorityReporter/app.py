@@ -128,25 +128,11 @@ def page_index(wiki_id, page):
     global WIKI_ID, WIKI_API_DATA, WIKI_AUTHORITY_DATA, POOL
     configure_wiki_id(wiki_id)
 
-    top_docs = sorted(WIKI_AUTHORITY_DATA.items(), key=lambda z: z[1], reverse=True)
-    top_page_tups = [(tup[0].split('_')[-1], tup[1]) for tup in top_docs[(page-1)*10:page*10]]
-
-    page_api_data = requests.get(WIKI_API_DATA[u'url'].split(u'/wiki')[0]+u'/api/v1/Articles/Details',
-                                 params={u'ids': ','.join([x[0] for x in top_page_tups])}).json()[u'items']
-
-    top_pages = []
-    for tup in top_page_tups:
-        if tup[0] in page_api_data:
-            d = dict(id=tup[0], authority=tup[1])
-            d.update(page_api_data[tup[0]])
-            top_pages.append(d)
-
-    r = POOL.map_async(update_top_page, [(str(wiki_id), page) for page in top_pages])
-    r.wait()
+    WIKI_AUTHORITY_DATA.get(wiki_id+u"_"+page, {})
 
     if WIKI_API_DATA[u'url'].endswith(u'/'):
         WIKI_API_DATA[u'url'] = WIKI_API_DATA[u'url'][:-1]
-    return render_template(u'index.html', docs=r.get(), wiki_api_data=WIKI_API_DATA)
+    return render_template(u'index.html', page=page, wiki_api_data=WIKI_API_DATA)
 
 
 @app.route(u'/')
