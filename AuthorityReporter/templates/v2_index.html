@@ -44,6 +44,7 @@
 
             $('#wiki-picker form button').on('click', function(){
                 var dom = $(this);
+                alert('/wiki/'+wikis[$("#wiki-text-picker").val()]+'/'+dom.id+'/');
                 dom.attr('action', '/wiki/'+wikis[$("#wiki-text-picker").val()]+'/'+dom.id+'/');
             });
         });
