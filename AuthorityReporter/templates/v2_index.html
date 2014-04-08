@@ -16,7 +16,7 @@
     <div class="well">
       <div class="row" id="wiki-picker">
           <form action="#">
-              <input class="typeahead" type="text" placeholder="Pick a wiki">
+              <input id="wiki-text-picker" class="typeahead" type="text" placeholder="Pick a wiki">
               <button type="submit" class="btn btn-default">Go</button>
           </form>
       </div>
@@ -30,7 +30,7 @@
 
             $('#wiki-picker form').on('submit', function(){
                 var dom = $(this);
-                alert(dom.find('input').val());
+                alert($("#wiki-text-picker").val());
                 dom.attr('action', '/wiki/'+wikis[dom.find('input').val()]);
             });
 
