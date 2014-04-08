@@ -49,13 +49,12 @@ def wiki(wiki_id):
     pages = []
     for pageid, authority in id_to_authority:
         pages.append(dict(authority=authority, pageid=pageid, **vars(page_data.get(pageid, {}))))
-    render_template(u'v2_wiki.html', pages=pages, wiki_url=wiki_url, wiki_title=wiiki_title, wiki_id=wiki_id)
+    return render_template(u'v2_wiki.html', pages=pages, wiki_url=wiki_url, wiki_title=wiiki_title, wiki_id=wiki_id)
 
 
 @app.route(u'/')
 def index():
-    render_template(u'v2_index.html')
-
+    return render_template(u'v2_index.html')
 
 
 if __name__ == u'__main__':
