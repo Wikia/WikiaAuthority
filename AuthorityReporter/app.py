@@ -58,7 +58,7 @@ def topics(wiki_id):
     return render_template(u'topics.html', topics=top_topics, wiki_api_data=WIKI_API_DATA)
 
 
-@app.route(u'/wiki/<wiki_id>/authors/')
+@app.route(u'/wiki/<wiki_id>/users/')
 def authors(wiki_id):
     global WIKI_ID, WIKI_API_DATA, WIKI_AUTHORITY_DATA, POOL
     configure_wiki_id(wiki_id)
@@ -99,6 +99,26 @@ def wiki_autocomplete():
     return Response(u"var wikis = %s;" % json.dumps(wikis),
                     mimetype=u"application/javascript",
                     content_type=u"application/javascript")
+
+
+@app.route(u'/wiki/<wiki_id>/articles/')
+def wiki_articles(wiki_id):
+    global args
+    db, cursor = get_db_and_cursor(args)
+    cursor.execute(u"""SELECT article_id, local_authority FROM articles
+                       WHERE wiki_id = %s ORDER BY local_authority DESC LIMIT 10""" % wiki_id)
+    id_to_authority = [(row[0], row[1]) for row in cursor.fetchall()]
+    cursor.execute(u"""SELECT title, url FROM wikis WHERE wiki_id = %s""" % wiki_id)
+    (wiki_title, wiki_url,) = cursor.fetchone()
+    response = requests.get(wiki_url+u'api/v1/Articles/Details',
+                            params=dict(ids=u','.join([str(a[0]) for a in id_to_authority])))
+
+    page_data = dict(response.json().get(u'items', {}))
+    pages = []
+    for pageid, authority in id_to_authority:
+        pages.append(dict(authority=authority, pageid=pageid, **page_data.get(str(pageid), {})))
+    return render_template(u'v2_wiki_articles.html',
+                           pages=pages, wiki_url=wiki_url, wiki_title=wiki_title, wiki_id=wiki_id)
 
 
 
