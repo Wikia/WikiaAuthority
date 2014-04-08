@@ -117,7 +117,7 @@ def wiki_articles(wiki_id):
     pages = []
     for pageid, authority in id_to_authority:
         pages.append(dict(authority=authority, pageid=pageid, **page_data.get(str(pageid), {})))
-    return render_template(u'v2_wiki_articles.html',
+    return render_template(u'v2_wiki_wiki_articles.html',
                            pages=pages, wiki_url=wiki_url, wiki_title=wiki_title, wiki_id=wiki_id)
 
 

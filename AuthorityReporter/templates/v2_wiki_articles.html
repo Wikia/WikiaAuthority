@@ -17,13 +17,13 @@
       <div class="row">
         <div class="col-md-3 wiki-image">
             {% if doc['thumbnail'] %}
-           <a href="{{ wiki_url }}{{doc['url']}}"><img class="img-thumbnail" src="{{ doc['thumbnail'] }}" alt=""/></a>
+           <a href="/wiki/{{wiki_id}}/page/{{doc['id']}}"><img class="img-thumbnail" src="{{ doc['thumbnail'] }}" alt=""/></a>
             {% endif %}
         </div>
         <div class="col-md-9 content-wrapper">
           <div class="row">
             <div class="row">
-              <h3 style="text-align: left;"><a href="{{ wiki_url }}{{doc['url']}}">{{ doc['title'] }}</a></h3>
+              <h3 style="text-align: left;"><a href="/wiki/{{wiki_id}}/page/{{doc['id']}}">{{ doc['title'] }}</a></h3>
             </div>
             <div class="row">
                 <h4>Authority</h4>
