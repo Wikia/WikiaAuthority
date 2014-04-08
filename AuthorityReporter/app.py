@@ -141,10 +141,10 @@ def main():
                         help=u"App host")
     parser.add_argument(u'--app-port', dest=u'app_port', action=u'store', default=5000, type=int,
                         help=u"App port")
-    options = parser.parse_args()
+    args = parser.parse_args()
 
     app.debug = True
-    app.run(host=options.app_host, port=options.app_port)
+    app.run(host=args.app_host, port=args.app_port)
 
 
 if __name__ == u'__main__':
