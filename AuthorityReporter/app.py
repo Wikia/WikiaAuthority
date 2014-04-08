@@ -46,7 +46,7 @@ def configure_wiki_id(wiki_id):
                                      params=dict(ids=WIKI_ID)).json()['items'][wiki_id]
 
 
-@app.route(u'/<wiki_id>/topics/')
+@app.route(u'/wiki/<wiki_id>/topics/')
 def topics(wiki_id):
     global WIKI_ID, WIKI_API_DATA, WIKI_AUTHORITY_DATA, POOL
     configure_wiki_id(wiki_id)
@@ -58,7 +58,7 @@ def topics(wiki_id):
     return render_template(u'topics.html', topics=top_topics, wiki_api_data=WIKI_API_DATA)
 
 
-@app.route(u'/<wiki_id>/authors/')
+@app.route(u'/wiki/<wiki_id>/authors/')
 def authors(wiki_id):
     global WIKI_ID, WIKI_API_DATA, WIKI_AUTHORITY_DATA, POOL
     configure_wiki_id(wiki_id)
@@ -102,7 +102,7 @@ def wiki_autocomplete():
 
 
 
-@app.route(u'/<wiki_id>/<page>/')
+@app.route(u'/wiki/<wiki_id>/page/<page>/')
 def page_index(wiki_id, page):
     page = int(page)
     global WIKI_ID, WIKI_API_DATA, WIKI_AUTHORITY_DATA, POOL
