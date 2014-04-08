@@ -30,7 +30,7 @@
 
             $('#wiki-picker form').on('submit', function(){
                 var dom = $(this);
-                alert($("#wiki-text-picker").val());
+                alert($("#wiki-text-picker").text());
                 dom.attr('action', '/wiki/'+wikis[dom.find('input').val()]);
             });
 
