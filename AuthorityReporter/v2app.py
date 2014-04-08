@@ -34,8 +34,13 @@ def wiki_autocomplete():
                     content_type=u"application/javascript")
 
 
-@app.route(u'/wiki/<wiki_id>/')
-def wiki(wiki_id):
+@app.route(u'/wiki/<wiki_id>/articles/topics/')
+def wiki_users(wiki_id):
+    pass
+
+
+@app.route(u'/wiki/<wiki_id>/articles/topics/')
+def wiki_articles(wiki_id):
     global args
     db, cursor = get_db_and_cursor(args)
     cursor.execute(u"""SELECT article_id, local_authority FROM articles
@@ -50,7 +55,8 @@ def wiki(wiki_id):
     pages = []
     for pageid, authority in id_to_authority:
         pages.append(dict(authority=authority, pageid=pageid, **page_data.get(str(pageid), {})))
-    return render_template(u'v2_wiki.html', pages=pages, wiki_url=wiki_url, wiki_title=wiki_title, wiki_id=wiki_id)
+    return render_template(u'v2_wiki_articles.html',
+                           pages=pages, wiki_url=wiki_url, wiki_title=wiki_title, wiki_id=wiki_id)
 
 
 @app.route(u'/')

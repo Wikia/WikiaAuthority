@@ -17,7 +17,9 @@
       <div class="row" id="wiki-picker">
           <form action="#">
               <input id="wiki-text-picker" class="typeahead" type="text" placeholder="Pick a wiki">
-              <button type="submit" class="btn btn-default">Go</button>
+              <button id="articles" type="submit" class="btn btn-default">Articles</button>
+              <button id="topics" type="submit" class="btn btn-default">Topics</button>
+              <button id="users" type="submit" class="btn btn-default">Users</button>
           </form>
       </div>
     </div>
@@ -40,9 +42,9 @@
               source: wiki_names.ttAdapter()
             });
 
-            $('#wiki-picker form').on('submit', function(){
+            $('#wiki-picker form button').on('click', function(){
                 var dom = $(this);
-                dom.attr('action', '/wiki/'+wikis[$("#wiki-text-picker").val()]);
+                dom.attr('action', '/wiki/'+wikis[$("#wiki-text-picker").val()]+'/'+dom.id+'/');
             });
         });
     </script>

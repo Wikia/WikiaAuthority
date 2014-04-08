@@ -16,7 +16,9 @@
     <div class="well">
       <div class="row">
         <div class="col-md-3 wiki-image">
+            {% if doc['thumbnail'] %}
            <a href="{{ wiki_url }}{{doc['url']}}"><img class="img-thumbnail" src="{{ doc['thumbnail'] }}" alt=""/></a>
+            {% endif %}
         </div>
         <div class="col-md-9 content-wrapper">
           <div class="row">
