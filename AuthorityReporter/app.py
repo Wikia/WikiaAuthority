@@ -129,6 +129,7 @@ def page_index(wiki_id, page):
     configure_wiki_id(wiki_id)
 
     page_data = WIKI_AUTHORITY_DATA.get(str(wiki_id)+u"_"+str(page), {})
+    print page_data
 
     if WIKI_API_DATA[u'url'].endswith(u'/'):
         WIKI_API_DATA[u'url'] = WIKI_API_DATA[u'url'][:-1]
