@@ -143,7 +143,7 @@ def page_index(wiki_id, page_id):
         users_dict[user_data[u'user_id']].update(user_data)
 
     cursor.execute(u"""SELECT topics.topic_id, topics.name
-                       FROM topics INNER JOIN articles_topics ON wiki_id = %d AND article_id = %d
+                       FROM topics INNER JOIN articles_topics ON wiki_id = %s AND article_id = %s
                                               AND topics.topic_id = articles_topics.topic_id
                        ORDER BY topics.total_authority DESC LIMIT 25""" % (wiki_id, page_id))
 
