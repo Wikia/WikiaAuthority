@@ -129,7 +129,7 @@ def page_index(wiki_id, page_id):
     configure_wiki_id(wiki_id)
 
     db, cursor = get_db_and_cursor(args)
-    cursor.execute(u"""SELECT users.user_id, user.user_name, contribs FROM articles_users
+    cursor.execute(u"""SELECT users.user_id, users.user_name, contribs FROM articles_users
                        INNER JOIN users ON wiki_id = %s AND article_id = %s AND users.user_id = articles_users.user_id
                        ORDER BY contribs desc LIMIT 10""" % (wiki_id, page_id))
 
