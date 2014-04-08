@@ -128,7 +128,7 @@ def page_index(wiki_id, page):
     global WIKI_ID, WIKI_API_DATA, WIKI_AUTHORITY_DATA, POOL
     configure_wiki_id(wiki_id)
 
-    WIKI_AUTHORITY_DATA.get(wiki_id+u"_"+page, {})
+    WIKI_AUTHORITY_DATA.get(str(wiki_id)+u"_"+str(page), {})
 
     if WIKI_API_DATA[u'url'].endswith(u'/'):
         WIKI_API_DATA[u'url'] = WIKI_API_DATA[u'url'][:-1]
