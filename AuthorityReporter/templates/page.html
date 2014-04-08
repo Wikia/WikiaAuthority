@@ -10,13 +10,28 @@
   <body class="container">
     <script src="http://code.jquery.com/jquery.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
-    <h1><a href="/"><span class="glyphicon glyphicon-home"></span></a> Most Authoritative Pages</h1>
-    <h2>{{ wiki_api_data['title'] }}</h2>
+    <h1>{{page_title}}</h1>
     {% for doc in docs %}
     <div class="well">
       <div class="row">
-        {{page_data}}
+        <div class="col-md-6">
+            <h3>Top 10 Users</h3>
+            <ul>
+            {% for user in users %}
+            <li>{{user.name}} -- {{user.contribs}}</li>
+            {% endfor %}
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <h3>Top Topics</h3>
+            <ul>
+            {% for topic in topics %}
+            <li>{{topic}}</li>
+            {% endfor %}
+            </ul>
+        </div>
       </div>
+
     </div>
     {% endfor %}
     </div>

@@ -2,6 +2,7 @@ from flask import Flask, render_template, Response
 import requests
 import argparse
 import json
+from collections import OrderedDict
 from wikia_dstk.authority import add_db_arguments, get_db_and_cursor
 from nlp_services.authority import WikiAuthorityService, PageAuthorityService
 from nlp_services.authority import WikiAuthorTopicAuthorityService, WikiAuthorsToIdsService
@@ -122,18 +123,36 @@ def wiki_articles(wiki_id):
 
 
 
-@app.route(u'/wiki/<wiki_id>/page/<page>/')
-def page_index(wiki_id, page):
-    page = int(page)
-    global WIKI_ID, WIKI_API_DATA, WIKI_AUTHORITY_DATA, POOL
+@app.route(u'/wiki/<wiki_id>/page/<page_id>/')
+def page_index(wiki_id, page_id):
+    global WIKI_ID, WIKI_API_DATA, WIKI_AUTHORITY_DATA, POOL, args
     configure_wiki_id(wiki_id)
 
-    page_data = WIKI_AUTHORITY_DATA.get(str(wiki_id)+u"_"+str(page), {})
-    print page_data
+    db, cursor = get_db_and_cursor(args)
+    cursor.execute(u"""SELECT user_id, user_name, contribs FROM articles_users
+                       WHERE wiki_id = %s AND article_id = %s ORDER BY contribs desc LIMIT 10""" % (wiki_id, page_id))
 
-    if WIKI_API_DATA[u'url'].endswith(u'/'):
-        WIKI_API_DATA[u'url'] = WIKI_API_DATA[u'url'][:-1]
-    return render_template(u'page.html', page_data=page_data, wiki_api_data=WIKI_API_DATA)
+    users_dict = OrderedDict([(a[0], {u'id': a[0], u'name': a[1], u'contribs': a[2]}) for a in cursor.fetchall()])
+
+    user_api_data = requests.get(WIKI_API_DATA[u'url']+u'/api/v1/User/Details',
+                                 params={u'ids': u','.join(map(lambda x: str(x), users_dict.keys())),
+                                         u'format': u'json'}).json()[u'items']
+
+    for user_data in user_api_data:
+        users_dict[user_data[u'user_id']].update(user_data)
+
+    cursor.execute(u"""SELECT topics.topic_id, topics.name
+                       FROM topics INNER JOIN articles_topics ON wiki_id = %d AND article_id = %d
+                                              AND topics.topic_id = articles_topics.topic_id
+                       ORDER BY topics.total_authority DESC LIMIT 25""" % (wiki_id, page_id))
+
+    page_topics = [{u'id': row[0], u'name': row[1]} for row in cursor.fetchall()]
+
+    cursor.execute(u"""SELECT title FROM articles WHERE article_id = %s AND wiki_id = %s""" % (page_id, wiki_id))
+    (page_title,) = cursor.fetchall()
+
+    return render_template(u'page.html', users=users_dict.values(), topics=page_topics,
+                           wiki_api_data=WIKI_API_DATA, page_title=page_title)
 
 
 @app.route(u'/')
