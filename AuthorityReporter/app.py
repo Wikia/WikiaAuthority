@@ -155,6 +155,64 @@ def page_index(wiki_id, page_id):
                            wiki_api_data=WIKI_API_DATA, page_title=page_title)
 
 
+@app.route(u'/topic/<topic>/wikis/')
+def wikis_for_topic(topic):
+    global args
+    db, cursor = get_db_and_cursor(args)
+    cursor.execute(u"""
+SELECT wikis.wiki_id, SUM(articles.global_authority) AS total_auth
+FROM topics
+  INNER JOIN articles_topics ON topics.name = '%s' AND topics.topic_id = articles_topics.topic_id
+  INNER JOIN articles ON articles.article_id = articles_topics.article_id AND articles.wiki_id = articles_topics.wiki_id
+  INNER JOIN wikis ON articles.wiki_id = wikis.wiki_id GROUP BY articles.wiki_id ORDER BY total_auth DESC LIMIT 10
+-- selects the best wikis for a given topic
+                    """ % db.escape_string(topic))
+
+    result = requests.get(u'http://www.wikia.com/api/v1/Wikis/Details',
+                          params=dict(ids=u','.join([str(x[0]) for x in cursor.fetchall()])))
+
+    wikis = result.json().get(u'items', {})
+
+    return render_template(u'wiki.html', wikis=wikis)
+
+
+
+
+"""
+SELECT wikis.url, articles.article_id, articles_users.contribs * articles.global_authority AS auth
+FROM users
+  INNER JOIN articles_users ON users.user_name = 'cook me plox' AND articles_users.user_id = users.user_id
+  INNER JOIN wikis on wikis.wiki_id = articles_users.wiki_id
+  INNER JOIN articles ON articles.article_id = articles_users.article_id AND articles.wiki_id = articles_users.wiki_id
+ORDER BY auth DESC LIMIT 10;
+-- selects the most important pages a user has contributed to the most to
+"""""
+
+"""
+SELECT wikis.title, SUM(articles_users.contribs * articles.global_authority) AS auth
+FROM users
+  INNER JOIN articles_users ON users.user_name = 'cook me plox' AND articles_users.user_id = users.user_id
+  INNER JOIN wikis on wikis.wiki_id = articles_users.wiki_id
+  INNER JOIN articles ON articles.article_id = articles_users.article_id AND articles.wiki_id = articles_users.wiki_id
+GROUP BY wikis.wiki_id ORDER BY auth DESC LIMIT 10;
+-- selects the most important wiki a user has contributed the most to
+"""
+
+"""
+SELECT users.user_name, SUM(articles_users.contribs * articles.global_authority) AS auth
+FROM topics
+  INNER JOIN articles_topics ON topics.name = 'sonic' AND topics.topic_id = articles_topics.topic_id
+  INNER JOIN articles_users ON articles_topics.article_id = articles_users.article_id
+                               AND articles_topics.wiki_id = articles_users.wiki_id
+  INNER JOIN articles ON articles.article_id = articles_users.article_id AND articles.wiki_id = articles_users.wiki_id
+  INNER JOIN users ON articles_users.user_id = users.user_id
+GROUP BY users.user_id
+ORDER BY auth DESC
+LIMIT 10
+-- selects the most influential authors for a given topic
+"""
+
+
 @app.route(u'/')
 def index():
     return render_template(u'v2_index.html')
