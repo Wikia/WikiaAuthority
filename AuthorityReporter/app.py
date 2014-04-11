@@ -168,12 +168,14 @@ FROM topics
 -- selects the best wikis for a given topic
                     """ % db.escape_string(topic))
 
+    wiki_ids = [str(x[0]) for x in cursor.fetchall()]
+
     result = requests.get(u'http://www.wikia.com/api/v1/Wikis/Details',
-                          params=dict(ids=u','.join([str(x[0]) for x in cursor.fetchall()])))
+                          params=dict(ids=u','.join(wiki_ids)))
 
     wikis = result.json().get(u'items', {})
 
-    return render_template(u'wiki.html', wikis=wikis)
+    return render_template(u'wiki.html', wikis=wikis, wiki_ids=wiki_ids)
 
 
 
