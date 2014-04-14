@@ -17,9 +17,25 @@
       <div class="row" id="wiki-picker">
           <form action="#">
               <input id="wiki-text-picker" class="typeahead" type="text" placeholder="Pick a wiki">
-              <button id="articles" type="submit" class="btn btn-default">Articles</button>
-              <button id="topics" type="submit" class="btn btn-default">Topics</button>
-              <button id="users" type="submit" class="btn btn-default">Users</button>
+              <button id="wiki-pages" type="submit" class="btn btn-default">Articles</button>
+              <button id="wiki-topics" type="submit" class="btn btn-default">Topics</button>
+              <button id="wiki-users" type="submit" class="btn btn-default">Users</button>
+          </form>
+      </div>
+        <div class="row" id="user-search">
+          <form action="#">
+              <input id="user-search-text" type="text" placeholder="Search for a user">
+              <button id="user-pages" type="submit" class="btn btn-default">Articles</button>
+              <button id="user-topics" type="submit" class="btn btn-default">Topics</button>
+              <button id="user-wikis" type="submit" class="btn btn-default">Wikis</button>
+          </form>
+      </div>
+      <div class="row" id="topic-search">
+          <form action="#">
+              <input id="topic-search-text" type="text" placeholder="Search for a topic">
+              <button id="topic-pages" type="submit" class="btn btn-default">Articles</button>
+              <button id="topic-users" type="submit" class="btn btn-default">Users</button>
+              <button id="topic-wikis" type="submit" class="btn btn-default">Wikis</button>
           </form>
       </div>
     </div>
@@ -44,7 +60,20 @@
 
             $('#wiki-picker form button').on('click', function(){
                 var dom = $(this);
-                dom.closest('form').attr('action', '/wiki/'+wikis[$("#wiki-text-picker").val()]+'/'+dom.attr('id')+'/');
+                dom.closest('form').attr('action', '/wiki/'+wikis[$("#wiki-text-picker").val()]
+                        +'/'+dom.attr('id').replace('wiki-', '')+'/');
+            });
+
+            $('#topic-search button').on('click', function(){
+                var dom = $(this);
+                dom.closest('form').attr('action', '/topic/'+$('#topic-search-text').val()+'/'
+                            +dom.attr('id').replace('topic-', '')+'/');
+            });
+
+            $('#user-search button').on('click', function(){
+                var dom = $(this);
+                dom.closest('form').attr('action', '/user/'+$('#user-search-text').val()+'/'
+                            +dom.attr('id').replace('user-', '')+'/');
             });
         });
     </script>
