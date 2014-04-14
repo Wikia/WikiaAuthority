@@ -283,8 +283,11 @@ LIMIT 10
 
     user_data = cursor.fetchall()
 
-    user_api_data = requests.get(u'http://www.wikia.com/api/v1/User/Details',
-                                 params={u'ids': u','.join([str(x[0]) for x in user_data])}).json()[u'items']
+    response = requests.get(u'http://www.wikia.com/api/v1/User/Details',
+                            params={u'ids': u','.join([str(x[0]) for x in user_data])})
+    print response
+
+    user_api_data = response.json()[u'items']
 
     id_to_auth = dict(user_data)
     author_objects = []
