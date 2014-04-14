@@ -199,8 +199,13 @@ ORDER BY articles_users.contribs * articles.global_authority DESC LIMIT 10;
     for url, ids in url_to_ids.items():
         response = requests.get(u'%s/api/v1/Articles/Details' % url, params=dict(ids=u','.join(ids)))
         url_to_articles[url] = dict(response.json().get(u'items', {}))
-    ordered_page_results = [dict(base_url=url, **url_to_articles[url].get(page_id, {}))
-                            for url, page_id in ordered_db_results]
+
+    ordered_page_results = []
+    for url, page_id in ordered_db_results:
+        result = dict(base_url=url, **url_to_articles[url].get(page_id, {}))
+        result[u'full_url'] = (result.get(u'base_url', '').trim(u'/') + result.get(u'url', ''))
+        ordered_page_results.append(result)
+
     return render_template(u'user_pages.html', user_name=user_name, pages=ordered_page_results)
 
 
