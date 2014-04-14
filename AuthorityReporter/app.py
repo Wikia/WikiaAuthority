@@ -286,6 +286,7 @@ LIMIT 10
     response = requests.get(u'http://www.wikia.com/api/v1/User/Details',
                             params={u'ids': u','.join([str(x[0]) for x in user_data])})
     print response
+    print response.url
 
     user_api_data = response.json()[u'items']
 
