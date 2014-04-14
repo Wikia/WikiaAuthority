@@ -182,7 +182,7 @@ def pages_for_topic(topic):
     global args
     db, cursor = get_db_and_cursor(args)
     cursor.execute(u"""
-    SELECT wikis.url, wiki.name, articles.article_id
+    SELECT wikis.url, wiki.wiki_name, articles.article_id
     FROM topics INNER JOIN articles_topics ON topics.name = '%s' AND topics.topic_id = articles_topics.topic_id
     INNER JOIN articles ON articles.article_id = articles_topics.article_id
                            AND articles.wiki_id = articles_topics.wiki_id
