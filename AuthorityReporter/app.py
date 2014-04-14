@@ -188,6 +188,7 @@ def pages_for_topic(topic):
                            AND articles.wiki_id = articles_topics.wiki_id
     INNER JOIN wikis ON wikis.wiki_id = articles.wiki_id
     ORDER BY articles.global_authority DESC
+    LIMIT 10
     """ % db.escape_string(topic))
 
     ordered_db_results = [(y[0], y[1], str(y[2])) for y in cursor.fetchall()]
