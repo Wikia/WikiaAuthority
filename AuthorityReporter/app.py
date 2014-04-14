@@ -203,7 +203,7 @@ ORDER BY articles_users.contribs * articles.global_authority DESC LIMIT 10;
     ordered_page_results = []
     for url, page_id in ordered_db_results:
         result = dict(base_url=url, **url_to_articles[url].get(page_id, {}))
-        result[u'full_url'] = (result.get(u'base_url', '').trim(u'/') + result.get(u'url', ''))
+        result[u'full_url'] = (result.get(u'base_url', '').strip(u'/') + result.get(u'url', ''))
         ordered_page_results.append(result)
 
     return render_template(u'user_pages.html', user_name=user_name, pages=ordered_page_results)
