@@ -204,7 +204,7 @@ def pages_for_topic(topic):
         result[u'full_url'] = (result.get(u'base_url', '').strip(u'/') + result.get(u'url', ''))
         ordered_page_results.append(result)
 
-    return render_template(u'user_pages.html', topic=topic, pages=ordered_page_results)
+    return render_template(u'topic_pages.html', topic=topic, pages=ordered_page_results)
 
 
 @app.route(u'/user/<user_name>/pages/')
