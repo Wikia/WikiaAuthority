@@ -182,7 +182,7 @@ def pages_for_topic(topic):
     global args
     db, cursor = get_db_and_cursor(args)
     cursor.execute(u"""
-    SELECT wikis.url, articles.article_id
+    SELECT wikis.url, wiki.name, articles.article_id
     FROM topics INNER JOIN articles_topics ON topics.name = '%s' AND topics.topic_id = articles_topics.topic_id
     INNER JOIN articles ON articles.article_id = articles_topics.article_id
                            AND articles.wiki_id = articles_topics.wiki_id
@@ -190,18 +190,19 @@ def pages_for_topic(topic):
     ORDER BY articles.global_authority DESC
     """ % db.escape_string(topic))
 
-    ordered_db_results = [(y[0], str(y[1])) for y in cursor.fetchall()]
+    ordered_db_results = [(y[0], y[1], str(y[2])) for y in cursor.fetchall()]
     url_to_ids = defaultdict(list)
     url_to_articles = {}
-    map(lambda x: url_to_ids[x[0]].append(x[1]), ordered_db_results)
+    map(lambda x: url_to_ids[x[0]].append(x[2]), ordered_db_results)
     for url, ids in url_to_ids.items():
         response = requests.get(u'%s/api/v1/Articles/Details' % url, params=dict(ids=u','.join(ids)))
         url_to_articles[url] = dict(response.json().get(u'items', {}))
 
     ordered_page_results = []
-    for url, page_id in ordered_db_results:
+    for url, wiki_name, page_id in ordered_db_results:
         result = dict(base_url=url, **url_to_articles[url].get(page_id, {}))
         result[u'full_url'] = (result.get(u'base_url', '').strip(u'/') + result.get(u'url', ''))
+        result[u'wiki'] = wiki_name
         ordered_page_results.append(result)
 
     return render_template(u'topic_pages.html', topic=topic, pages=ordered_page_results)
