@@ -209,16 +209,31 @@ ORDER BY articles_users.contribs * articles.global_authority DESC LIMIT 10;
     return render_template(u'user_pages.html', user_name=user_name, pages=ordered_page_results)
 
 
-
-"""
-SELECT wikis.title, SUM(articles_users.contribs * articles.global_authority) AS auth
+@app.route(u'/user/<user_name>/wikis/')
+def wikis_for_user(user_name):
+    global args
+    db, cursor = get_db_and_cursor(args)
+    cursor.execute(u"""
+SELECT wikis.wiki_id
 FROM users
-  INNER JOIN articles_users ON users.user_name = 'cook me plox' AND articles_users.user_id = users.user_id
+  INNER JOIN articles_users ON users.user_name = '%s' AND articles_users.user_id = users.user_id
   INNER JOIN wikis on wikis.wiki_id = articles_users.wiki_id
   INNER JOIN articles ON articles.article_id = articles_users.article_id AND articles.wiki_id = articles_users.wiki_id
-GROUP BY wikis.wiki_id ORDER BY auth DESC LIMIT 10;
+GROUP BY wikis.wiki_id ORDER BY SUM(articles_users.contribs * articles.global_authority) DESC LIMIT 10;
 -- selects the most important wiki a user has contributed the most to
-"""
+    """ % db.escape_string(user_name))
+
+    wiki_ids = [str(x[0]) for x in cursor.fetchall()]
+
+    result = requests.get(u'http://www.wikia.com/api/v1/Wikis/Details',
+                          params=dict(ids=u','.join(wiki_ids)))
+
+    wikis = result.json().get(u'items', {})
+
+    return render_template(u'wiki.html', wikis=wikis, wiki_ids=wiki_ids,
+                           topic=u"Top Wikis for User <i>%s</i>" % user_name)
+
+
 
 """
 SELECT users.user_name, SUM(articles_users.contribs * articles.global_authority) AS auth
