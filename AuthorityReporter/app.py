@@ -256,6 +256,7 @@ LIMIT 10
 
     user_api_data = requests.get(u'http://www.wikia.com/api/v1/User/Details',
                                  params={u'ids': u','.join([str(x[0]) for x in user_data])}).json()[u'items']
+    print user_api_data
 
     author_objects = [dict(total_authority=auth, **(user_api_data.get(str(user_id), {})))
                       for user_id, auth in user_data]
