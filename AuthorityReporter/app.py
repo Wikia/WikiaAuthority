@@ -234,11 +234,14 @@ GROUP BY wikis.wiki_id ORDER BY SUM(articles_users.contribs * articles.global_au
                            topic=u"Top Wikis for User <i>%s</i>" % user_name)
 
 
-
-"""
-SELECT users.user_name, SUM(articles_users.contribs * articles.global_authority) AS auth
+@app.route(u'/topic/<topic>/users/')
+def topic_users(topic):
+    global args
+    db, cursor = get_db_and_cursor(args)
+    cursor.execute(u"""
+SELECT users.user_id, SUM(articles_users.contribs * articles.global_authority) AS auth
 FROM topics
-  INNER JOIN articles_topics ON topics.name = 'sonic' AND topics.topic_id = articles_topics.topic_id
+  INNER JOIN articles_topics ON topics.name = '%s' AND topics.topic_id = articles_topics.topic_id
   INNER JOIN articles_users ON articles_topics.article_id = articles_users.article_id
                                AND articles_topics.wiki_id = articles_users.wiki_id
   INNER JOIN articles ON articles.article_id = articles_users.article_id AND articles.wiki_id = articles_users.wiki_id
@@ -247,7 +250,22 @@ GROUP BY users.user_id
 ORDER BY auth DESC
 LIMIT 10
 -- selects the most influential authors for a given topic
-"""
+    """ % db.escape_string(topic))
+
+    user_data = cursor.fetchall()
+
+    user_api_data = requests.get(u'http://www.wikia.com/api/v1/User/Details',
+                                 params={u'ids': u','.join([str(x[0]) for x in user_data])}).json()[u'items']
+
+    author_objects = [dict(total_authority=auth, **(user_api_data.get(str(user_id), {})))
+                      for user_id, auth in user_data]
+
+    fake_wiki_api_data = {u'title': u'GlobalAuthors for %s' % topic, u'url': u'http://www.wikia.com/'}
+
+    return render_template(u'authors.html', authors=author_objects, wiki_api_data=fake_wiki_api_data)
+
+
+
 
 
 @app.route(u'/')
