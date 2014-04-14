@@ -10,6 +10,7 @@ from nlp_services.authority import WikiTopicsToAuthorityService
 from nlp_services.discourse.entities import CombinedWikiPageEntitiesService
 from nlp_services.caching import use_caching
 from multiprocessing import Pool
+from collections import defaultdict
 
 use_caching()
 
@@ -178,17 +179,31 @@ FROM topics
     return render_template(u'wiki.html', wikis=wikis, wiki_ids=wiki_ids)
 
 
-
-
-"""
-SELECT wikis.url, articles.article_id, articles_users.contribs * articles.global_authority AS auth
+@app.route(u'/user/<user_name>/pages/')
+def pages_for_user(user_name):
+    global args
+    db, cursor = get_db_and_cursor(args)
+    cursor.execute(u"""
+SELECT wikis.url, articles.article_id
 FROM users
-  INNER JOIN articles_users ON users.user_name = 'cook me plox' AND articles_users.user_id = users.user_id
+  INNER JOIN articles_users ON users.user_name = '%s' AND articles_users.user_id = users.user_id
   INNER JOIN wikis on wikis.wiki_id = articles_users.wiki_id
   INNER JOIN articles ON articles.article_id = articles_users.article_id AND articles.wiki_id = articles_users.wiki_id
-ORDER BY auth DESC LIMIT 10;
+ORDER BY articles_users.contribs * articles.global_authority DESC LIMIT 10;
 -- selects the most important pages a user has contributed to the most to
-"""""
+""" % db.escape_string(user_name))
+    url_to_ids = defaultdict(list)
+    ordered_db_results = [(y[0], str(y[1])) for y in cursor.fetchall()]
+    map(lambda x: url_to_ids[x[0]].append(x[1]), ordered_db_results)
+    url_to_articles = dict()
+    for url, ids in url_to_ids.items():
+        response = requests.get(u'%s/api/v1/Articles/Details' % url, params=dict(ids=u','.join(ids)))
+        url_to_articles[url] = dict(response.json().get(u'items', {}))
+    ordered_page_results = [dict(base_url=url, **url_to_articles[url].get(page_id, {}))
+                            for url, page_id in ordered_db_results]
+    return render_template(u'user_pages.html', user_name=user_name, pages=ordered_page_results)
+
+
 
 """
 SELECT wikis.title, SUM(articles_users.contribs * articles.global_authority) AS auth
