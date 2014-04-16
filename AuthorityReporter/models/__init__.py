@@ -4,7 +4,6 @@ from nlp_services.authority import WikiAuthorTopicAuthorityService, WikiAuthorsT
 from nlp_services.authority import WikiTopicsToAuthorityService
 from collections import defaultdict, OrderedDict
 from nlp_services.caching import use_caching
-from multiprocessing import Pool
 import requests
 
 
@@ -107,7 +106,7 @@ FROM topics
 
         return dict(wikis=wikis, wiki_ids=wiki_ids)
 
-    def get_users(self, limit=10):
+    def get_users(self, limit=10, with_api=True):
         """
         Gets users for a given topic
         :param limit: the number of users we want
@@ -117,7 +116,7 @@ FROM topics
         """
 
         self.cursor.execute(u"""
-SELECT users.user_id, SUM(articles_users.contribs * articles.global_authority) AS auth
+SELECT users.user_id, users.user_name, SUM(articles_users.contribs * articles.global_authority) AS auth
 FROM topics
   INNER JOIN articles_topics ON topics.name = '%s' AND topics.topic_id = articles_topics.topic_id
   INNER JOIN articles_users ON articles_topics.article_id = articles_users.article_id
@@ -134,20 +133,21 @@ LIMIT %d
 
         user_api_data = []
 
-        def get_details(ids):
-            return requests.get(u'http://www.wikia.com/api/v1/User/Details',
-                                params={u'ids': u','.join([str(y[0]) for y in ids])}).json()[u'items']
+        if with_api:
+            for i in range(0, limit, 25):
+                response = requests.get(u'http://www.wikia.com/api/v1/User/Details',
+                                        params={u'ids': u','.join([str(x[0]) for x in user_data[i:i+25]])})
 
-        user_api_data = [val for li in
-                         Pool(processes=8).map_async(get_details,
-                                                     [user_data[i:i+25] for i in range(0, limit, 25)]).get()
-                         for val in li]
+                user_api_data += response.json()[u'items']
 
-        id_to_auth = dict(user_data)
+        id_to_auth = OrderedDict([(x[0], {u'id': x[0], u'user_name': x[1], u'authority': x[2]}) for x in user_data])
         author_objects = []
-        for obj in user_api_data:
-            obj[u'total_authority'] = id_to_auth[obj[u'user_id']]
-            author_objects.append(obj)
+        if with_api:
+            for obj in user_api_data:
+                obj[u'total_authority'] = id_to_auth[obj[u'user_id'][u'authority']]
+                author_objects.append(obj)
+        else:
+            author_objects = id_to_auth.values()
 
         return author_objects
 
