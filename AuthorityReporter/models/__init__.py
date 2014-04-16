@@ -4,6 +4,7 @@ from nlp_services.authority import WikiAuthorTopicAuthorityService, WikiAuthorsT
 from nlp_services.authority import WikiTopicsToAuthorityService
 from collections import defaultdict, OrderedDict
 from nlp_services.caching import use_caching
+from multiprocessing import Pool
 import requests
 
 
@@ -133,11 +134,14 @@ LIMIT %d
 
         user_api_data = []
 
-        for i in range(0, limit, 25):
-            response = requests.get(u'http://www.wikia.com/api/v1/User/Details',
-                                    params={u'ids': u','.join([str(x[0]) for x in user_data[i:i+25]])})
+        def get_details(ids):
+            return requests.get(u'http://www.wikia.com/api/v1/User/Details',
+                                params={u'ids': u','.join([str(y[0]) for y in ids])}).json()[u'items']
 
-            user_api_data += response.json()[u'items']
+        user_api_data = [val for li in
+                         Pool(processes=8).map_async(get_details,
+                                                     [user_data[i:i+25] for i in range(0, limit, 25)]).get()
+                         for val in li]
 
         id_to_auth = dict(user_data)
         author_objects = []
