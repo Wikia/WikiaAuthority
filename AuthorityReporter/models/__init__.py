@@ -131,13 +131,13 @@ LIMIT %d
 
         user_data = self.cursor.fetchall()
 
-        user_api_data = {}
+        user_api_data = []
 
         for i in range(0, limit, 25):
             response = requests.get(u'http://www.wikia.com/api/v1/User/Details',
                                     params={u'ids': u','.join([str(x[0]) for x in user_data[i:i+25]])})
 
-            user_api_data.update(response.json()[u'items'])
+            user_api_data += response.json()[u'items']
 
         id_to_auth = dict(user_data)
         author_objects = []
