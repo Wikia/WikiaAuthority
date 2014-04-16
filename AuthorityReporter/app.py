@@ -119,8 +119,8 @@ def wikis_for_topic_xls(topic):
     titles = [u"Wiki ID", u"Wiki Name", u"Wiki URL", u"Authority"]
     wikis = TopicModel(topic, args).get_wikis(limit=200)[u'wikis']
     keys = [u'id', u'title', u'url', u'authority']
-    map(lambda cell, title: wksht.write(0, cell, title), enumerate(titles))
-    map(lambda row, wiki: map(lambda cell, key: wksht.write(row+1, cell, wiki[key]), enumerate(keys)), enumerate(wikis))
+    map(lambda (cell, title): wksht.write(0, cell, title), enumerate(titles))
+    map(lambda (row, wiki): map(lambda (cell, key): wksht.write(row+1, cell, wiki[key]), enumerate(keys)), enumerate(wikis))
 
     return excel_response(wkbk, u"%s-wikis.xls" % topic)
 
@@ -145,8 +145,8 @@ def pages_for_topic_xls(topic):
     titles = [u"Wiki ID", u"Page ID", u"Wiki Name", u"Page URL", u"Page Title", u"Authority"]
     keys = [u'wiki_id', u'page_id', u'wiki', u'full_url', u'title', u'authority']
     pages = TopicModel(topic, args).get_pages(1000)
-    map(lambda cell, title: worksheet.write(0, cell, title), enumerate(titles))
-    map(lambda row, page: map(lambda cell, key: worksheet.write(row+1, cell, page[key]), keys), enumerate(pages))
+    map(lambda (cell, title): worksheet.write(0, cell, title), enumerate(titles))
+    map(lambda (row, page): map(lambda (cell, key): worksheet.write(row+1, cell, page[key]), keys), enumerate(pages))
     return excel_response(workbook, filename=u'%s-users.xls' % topic)
 
 
@@ -173,7 +173,7 @@ def users_for_topic_xls(topic):
     keys = [u"user_name", u"total_authority"]
     map(lambda (cell, title): worksheet.write(0, cell, title), enumerate(titles))
     users = TopicModel(topic, args).get_users(limit=1000, with_api=False)
-    map(lambda row, user: map(lambda (cell, key): worksheet.write(row+1, cell, user[key]), keys), users)
+    map(lambda (row, user): map(lambda (cell, key): worksheet.write(row+1, cell, user[key]), keys), users)
     return excel_response(workbook, filename=u'%s-users' % topic)
 
 
