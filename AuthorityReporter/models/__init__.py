@@ -48,15 +48,15 @@ class TopicModel(BaseModel):
         """
 
         self.cursor.execute(u"""
-    SELECT wikis.url, wikis.title, articles.article_id
+    SELECT wikis.url, wikis.title, wikis.wiki_id, articles.article_id, articles.global_authority  AS auth
     FROM topics INNER JOIN articles_topics ON topics.name = '%s' AND topics.topic_id = articles_topics.topic_id
     INNER JOIN articles ON articles.article_id = articles_topics.article_id
                            AND articles.wiki_id = articles_topics.wiki_id
     INNER JOIN wikis ON wikis.wiki_id = articles.wiki_id
-    ORDER BY articles.global_authority DESC
+    ORDER BY auth DESC
     LIMIT %d
     """ % (self.db.escape_string(self.topic), limit))
-        ordered_db_results = [(y[0], y[1], str(y[2])) for y in self.cursor.fetchall()]
+        ordered_db_results = [(y[0], y[1], str(y[2]), str(y[3]), y[4]) for y in self.cursor.fetchall()]
         url_to_ids = defaultdict(list)
         url_to_articles = {}
         map(lambda x: url_to_ids[x[0]].append(x[2]), ordered_db_results)
@@ -65,10 +65,13 @@ class TopicModel(BaseModel):
             url_to_articles[url] = dict(response.json().get(u'items', {}))
 
         ordered_page_results = []
-        for url, wiki_name, page_id in ordered_db_results:
+        for url, wiki_name, wiki_id, page_id, authority in ordered_db_results:
             result = dict(base_url=url, **url_to_articles[url].get(page_id, {}))
             result[u'full_url'] = (result.get(u'base_url', '').strip(u'/') + result.get(u'url', ''))
             result[u'wiki'] = wiki_name
+            result[u'authority'] = authority
+            result[u'wiki_id'] = wiki_id
+            result[u'page_id'] = page_id
             ordered_page_results.append(result)
 
         return ordered_page_results
@@ -91,12 +94,15 @@ FROM topics
     -- selects the best wikis for a given topic
                         """ % (self.db.escape_string(self.topic), limit))
 
-        wiki_ids = [str(x[0]) for x in self.cursor.fetchall()]
+        wids_to_auth = OrderedDict([(row[0], row[1]) for row in self.cursor.fetchall()])
+        wiki_ids = map(str, wids_to_auth.keys())
 
         result = requests.get(u'http://www.wikia.com/api/v1/Wikis/Details',
                               params=dict(ids=u','.join(wiki_ids)))
 
         wikis = result.json().get(u'items', {})
+        for wid, auth in wids_to_auth.items():
+            wikis[wid][u'authority'] = auth
 
         return dict(wikis=wikis, wiki_ids=wiki_ids)
 
