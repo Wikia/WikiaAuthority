@@ -171,7 +171,7 @@ def users_for_topic_xls(topic):
     worksheet = workbook.add_sheet(topic)
     titles = [u"Name", u"Authority"]
     keys = [u"user_id", u"total_authority"]
-    map(lambda cell, title: worksheet.write(0, cell, title), enumerate(titles))
+    map(lambda (cell, title): worksheet.write(0, cell, title), enumerate(titles))
     users = TopicModel(topic, args).get_users(limit=1000)
     map(lambda row, user: map(lambda cell, key: worksheet.write(row+1, cell, user[key]), keys), users)
     return excel_response(workbook, filename=u'%s-users' % topic)
