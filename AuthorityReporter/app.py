@@ -151,7 +151,7 @@ def pages_for_topic_xls(topic):
     map(lambda (row, page): map(lambda (cell, key): worksheet.write(row+1, cell, page.get(key, u'?')),
                                 enumerate(keys)),
         enumerate(pages))
-    return excel_response(workbook, filename=u'%s-users.xls' % topic)
+    return excel_response(workbook, filename=u'%s-pages.xls' % topic)
 
 
 @app.route(u'/topic/<topic>/users/')
