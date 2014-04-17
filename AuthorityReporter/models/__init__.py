@@ -69,9 +69,9 @@ class TopicModel(BaseModel):
 
         url_to_articles = dict(Pool(processes=8).map_async(get_page_response, list(url_to_ids.items())).get())
 
+        ordered_page_results = []
         for url, wiki_name, wiki_id, page_id, authority in ordered_db_results:
-            print url, url_to_articles[url]
-            result = dict(base_url=url, **url_to_articles[url].get(page_id, {}))
+            result = dict(base_url=url, **url_to_articles[url].get(str(page_id), {}))
             result[u'full_url'] = (result.get(u'base_url', '').strip(u'/') + result.get(u'url', ''))
             result[u'wiki'] = wiki_name
             result[u'authority'] = authority
