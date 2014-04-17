@@ -300,7 +300,7 @@ class WikiModel(BaseModel):
                   u'apfilterredir': u'nonredirects', u'format': u'json'}
         if apfrom is not None:
             params[u'apfrom'] = apfrom
-        resp = requests.get(self.api_data[u'url'], params=params)
+        resp = requests.get(u'%s/api.php' % self.api_data[u'url'], params=params)
         response = resp.json()
         resp.close()
         allpages = response.get(u'query', {}).get(u'allpages', [])
