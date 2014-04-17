@@ -258,10 +258,6 @@ class WikiModel(BaseModel):
         authors_dict = OrderedDict([(x[0], dict(id=x[0], name=x[1], total_authority=x[2]))
                                     for x in self.cursor.fetchall()])
 
-        print requests.get(self.api_data[u'url']+u'/api/v1/User/Details',
-                                     params={u'ids': u",".join(map(str, authors_dict.keys())),
-                                             u'format': u'json'}).url
-
         user_api_data = requests.get(self.api_data[u'url']+u'/api/v1/User/Details',
                                      params={u'ids': u",".join(map(str, authors_dict.keys())),
                                              u'format': u'json'}).json()[u'items']
@@ -402,7 +398,6 @@ class WikiModel(BaseModel):
             if i > 65000:
                 break
 
-        print u"Writing Topic Data"
         topics_sheet = workbook.add_sheet(u"Topics by Authority")
         topics_sheet.write(0, 0, u"Topic")
         topics_sheet.write(0, 1, u"Authority")
@@ -624,7 +619,7 @@ GROUP BY wikis.wiki_id ORDER BY SUM(articles_users.contribs * articles.global_au
         SELECT topics.name, SUM(au.contribs * articles.local_authority) AS topic_authority
         FROM users INNER JOIN articles_users au ON au.wiki_id = %s
                                                 AND users.user_name = "%s" AND users.user_id = au.user_id
-                   INNER JOIN JOIN articles_topics art ON art.article_id = au.article_id AND art.wiki_id = au.wiki_id
+                   INNER JOIN articles_topics art ON art.article_id = au.article_id AND art.wiki_id = au.wiki_id
                    INNER JOIN articles ON articles.article_id = au.article_id AND articles.wiki_id = au.wiki_id
                    INNER JOIN topics ON topics.topic_id = art.topic_id
         GROUP BY topics.topic_id
