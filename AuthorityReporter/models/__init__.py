@@ -390,7 +390,7 @@ class WikiModel(BaseModel):
         pivot_counter = 1
         for i, author in enumerate(author_authority):
             print author
-            authors_sheet.write(i+1, 0, author[u'user_name'])
+            authors_sheet.write(i+1, 0, author[u'name'])
             authors_sheet.write(i+1, 1, scaler.scale(author[u'total_authority']))
             for rank, topic in enumerate(author[u'topics'][:10]):
                 if pivot_counter > 65000:
