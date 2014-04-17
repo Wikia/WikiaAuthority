@@ -8,7 +8,6 @@ from werkzeug.datastructures import Headers
 from wikia_dstk.authority import add_db_arguments
 from nlp_services.caching import use_caching
 from models import TopicModel, WikiModel, PageModel, UserModel
-from models.combined_spreadsheets import get_workbook_for_wiki
 
 use_caching()
 
@@ -86,7 +85,7 @@ def spreadsheet_for_wiki(wiki_id):
     Generates a spreadsheet with topics, authors, and pages
     """
     global args
-    return excel_response(get_workbook_for_wiki(args, wiki_id), filename=u'wiki-%s-report.xls' % wiki_id)
+    return excel_response(WikiModel(wiki_id, args).get_workbook(), filename=u'wiki-%s-report.xls' % wiki_id)
 
 
 @app.route(u'/wiki_autocomplete.js')
