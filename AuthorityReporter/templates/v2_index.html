@@ -77,8 +77,15 @@
                             +dom.attr('id').replace('user-', '')+'/');
             });
 
-            $('#wiki-excel').on('click', function() {
-                $(this).attr('href', '/wiki/'+wikis[$("#wiki-text-picker").val()]+'/xls')
+            $('#wiki-excel').on('click', function(e) {
+                var wiki_id = wikis[$("#wiki-text-picker").val()];
+                if (typeof(wiki_id) == 'undefined') {
+                    alert("Please pick a wiki");
+                    e.preventDefault()
+                    return false;
+                } else{
+                    $(this).attr('href', '/wiki/'+wiki_id+'/xls')
+                }
             });
         });
     </script>
