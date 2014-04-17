@@ -223,8 +223,8 @@ class WikiModel(BaseModel):
         """
         self.cursor.execute(u"""
         SELECT users.user_id, users.user_name, SUM(articles.local_authority) AS total_authority
-        FROM users INNER JOIN articles_users ON articles_users.wiki_id = %d AND users.user_id = articles_users.user_id
-                   INNER JOIN articles on articles.article_id = articles_users.article_id AND articles.wiki_id = %d
+        FROM users INNER JOIN articles_users ON articles_users.wiki_id = %s AND users.user_id = articles_users.user_id
+                   INNER JOIN articles on articles.article_id = articles_users.article_id AND articles.wiki_id = %s
         GROUP BY users.user_id
         ORDER BY total_authority DESC""" % (self.wiki_id, self.wiki_id))
 
@@ -241,8 +241,8 @@ class WikiModel(BaseModel):
 
         sql = u"""
         SELECT users.user_id, users.user_name, SUM(articles.local_authority * au.contribs) AS total_authority
-        FROM users INNER JOIN articles_users au ON au.wiki_id = %d AND au.user_id = users.user_id
-                   INNER JOIN articles ON articles.article_id = au.article_id AND articles.wiki_id = %d
+        FROM users INNER JOIN articles_users au ON au.wiki_id = %s AND au.user_id = users.user_id
+                   INNER JOIN articles ON articles.article_id = au.article_id AND articles.wiki_id = %s
         GROUP BY users.user_id
         ORDER BY total_authority DESC
         """
@@ -613,7 +613,7 @@ GROUP BY wikis.wiki_id ORDER BY SUM(articles_users.contribs * articles.global_au
         """
         sql = u"""
         SELECT topics.name, SUM(au.contribs * articles.local_authority) AS topic_authority
-        FROM users INNER JOIN articles_users au ON au.wiki_id = %d
+        FROM users INNER JOIN articles_users au ON au.wiki_id = %s
                                                 AND users.user_name = "%s" AND users.user_id = au.user_id
                    INNER JOIN JOIN articles_topics art ON art.article_id = au.article_id AND art.wiki_id = au.wiki_id
                    INNER JOIN articles ON articles.article_id = au.article_id AND articles.wiki_id = au.wiki_id
