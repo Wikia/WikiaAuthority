@@ -1,14 +1,26 @@
-import argparse
 import requests
 import xlwt
-from datetime import datetime
-from boto import connect_s3
 from collections import defaultdict
-from wikia_authority import MinMaxScaler
 from nlp_services.caching import use_caching
 from nlp_services.pooling import set_global_num_processes
 from nlp_services.authority import WikiAuthorityService, WikiTopicsToAuthorityService, WikiAuthorTopicAuthorityService
 from nlp_services.authority import WikiAuthorsToIdsService
+
+
+class MinMaxScaler:
+    """
+    Scales values from 0 to 1 by default
+    """
+
+    def __init__(self, vals, enforced_min=0, enforced_max=1):
+        self.min = min(vals)
+        self.max = max(vals)
+        self.enforced_min = enforced_min
+        self.enforced_max = enforced_max
+
+    def scale(self, val):
+        return (((self.enforced_max - self.enforced_min) * (val - self.min))
+                / (self.max - self.min)) + self.enforced_min
 
 
 def get_all_titles(api_url, apfrom=None, aplimit=500):

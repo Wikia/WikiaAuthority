@@ -52,19 +52,6 @@ def excel_response(spreadsheet, filename=u'export.xls'):
     return response
 
 
-@app.route(u'/autocomplete')
-def autocomplete_js():
-    """
-    This allows JS typeahead for wikis on the homepage
-    """
-    global args
-    return render_template('v2_index.html')
-    wikis = WikiModel.all_wikis(args)
-    return Response(u"var wikis = %s;" % json.dumps(wikis),
-                    mimetype=u"application/javascript",
-                    content_type=u"application/javascript")
-
-
 @app.route(u'/wiki/<wiki_id>/topics/')
 def topics_for_wiki(wiki_id):
     global args
@@ -100,6 +87,18 @@ def spreadsheet_for_wiki(wiki_id):
     """
     global args
     return excel_response(get_workbook_for_wiki(wiki_id), filename=u'wiki-%s-report.xls' % wiki_id)
+
+
+@app.route(u'/wiki_autocomplete.js')
+def wiki_autocomplete():
+    """
+    This allows JS typeahead for wikis on the homepage
+    """
+    global args
+    wikis = WikiModel.all_wikis(args)
+    return Response(u"var wikis = %s;" % json.dumps(wikis),
+                    mimetype=u"application/javascript",
+                    content_type=u"application/javascript")
 
 
 @app.route(u'/wiki/<wiki_id>/page/<page_id>/')
