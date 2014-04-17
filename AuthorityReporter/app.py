@@ -207,7 +207,7 @@ def topics_for_user(user_name):
     Shows the top 10 topics for a user
     """
     global args
-    return render_template(u'topics.html', user_name=user_name, pages=UserModel(user_name, args).get_topics())
+    return render_template(u'topics.html', user_name=user_name, topics=UserModel(user_name, args).get_topics())
 
 
 @app.route(u'/user/<user_name>/wikis/')
