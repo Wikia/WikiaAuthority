@@ -124,7 +124,7 @@ def wikis_for_topic_xls(topic):
                                 enumerate(keys)),
         enumerate(wikis))
 
-    return excel_response(wkbk, u"%s-wikis.xls" % topic)
+    return excel_response(wkbk, filename=u"%s-wikis.xls" % topic)
 
 
 @app.route(u'/topic/<topic>/pages/')
@@ -180,7 +180,7 @@ def users_for_topic_xls(topic):
     map(lambda (row, user): map(lambda (cell, key): worksheet.write(row+1, cell, user[key]),
                                 enumerate(keys)),
         enumerate(users))
-    return excel_response(workbook, filename=u'%s-users' % topic)
+    return excel_response(workbook, filename=u'%s-users.xls' % topic)
 
 
 @app.route(u'/user/<user_name>/pages/')
