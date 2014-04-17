@@ -52,7 +52,7 @@ def excel_response(spreadsheet, filename=u'export.xls'):
     return response
 
 
-@app.route(u'/wiki_autocomplete.js')
+@app.route(u'/wiki_autocomplete')
 def wiki_autocomplete():
     """
     This allows JS typeahead for wikis on the homepage
