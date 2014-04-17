@@ -599,7 +599,7 @@ GROUP BY wikis.wiki_id ORDER BY SUM(articles_users.contribs * articles.global_au
             sql += u" LIMIT %d" % limit
 
         self.cursor.execute(sql)
-        return OrderedDict([(x[0], dict(name=x[0], authority=x[1]) for x in self.cursor.fetchall())])
+        return OrderedDict([(x[0], dict(name=x[0], authority=x[1])) for x in self.cursor.fetchall()])
 
     def get_topics_for_wiki(self, wiki_id, limit=10):
         """
