@@ -202,7 +202,7 @@ def pages_for_user(user_name):
 
 
 @app.route(u'/user/<user_name>/topics/')
-def pages_for_user(user_name):
+def topics_for_user(user_name):
     """
     Shows the top 10 topics for a user
     """
