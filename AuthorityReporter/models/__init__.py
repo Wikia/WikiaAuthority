@@ -360,7 +360,7 @@ class WikiModel(BaseModel):
             pages_sheet.write(i+1, 0, page)
             pages_sheet.write(i+1, 1, scaler.scale(authorities[i]))
 
-        author_authority = self.get_all_authors()
+        author_authority = self.get_all_authors().values()
 
         for author in author_authority:
             author[u'topics'] = [topic.topic for topic in
