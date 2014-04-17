@@ -228,7 +228,7 @@ class WikiModel(BaseModel):
         GROUP BY users.user_id
         ORDER BY total_authority DESC""" % (self.wiki_id, self.wiki_id))
 
-        return OrderedDict([(x[0], dict(id=x[0], name=x[1], total_authority=x[2]) for x in self.cursor.fetchall())])
+        return OrderedDict([(x[0], dict(id=x[0], name=x[1], total_authority=x[2])) for x in self.cursor.fetchall()])
 
     def get_authors(self, limit=10):
         """
