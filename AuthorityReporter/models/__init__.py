@@ -365,13 +365,13 @@ class WikiModel(BaseModel):
         for counter, author in enumerate(author_authority):
             author[u'topics'] = [topic.topic for topic in
                                  UserModel(author, self.args).get_topics_for_wiki(self.wiki_id, limit=5)]
-            if counter > 250:
+            if counter > 25:
                 break
 
         topic_authority = self.get_topics(limit=None)
         for counter, topic in enumerate(topic_authority):
             topic[u'authors'] = TopicModel(topic[u'topic'], self.args).get_users(5, with_api=False)
-            if counter > 250:
+            if counter > 25:
                 break
 
         authors_sheet = workbook.add_sheet(u"Authors by Authority")
