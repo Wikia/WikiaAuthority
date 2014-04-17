@@ -593,7 +593,7 @@ GROUP BY wikis.wiki_id ORDER BY SUM(articles_users.contribs * articles.global_au
         sql = u"""
         SELECT topics.name, SUM(au.contribs * articles.local_authority) AS topic_authority
         FROM users INNER JOIN articles_users au ON users.user_name = "%s" AND users.user_id = au.user_id
-                   INNER JOIN JOIN articles_topics art ON art.article_id = au.article_id AND art.wiki_id = au.wiki_id
+                   INNER JOIN articles_topics art ON art.article_id = au.article_id AND art.wiki_id = au.wiki_id
                    INNER JOIN articles ON articles.article_id = au.article_id AND articles.wiki_id = au.wiki_id
                    INNER JOIN topics ON topics.topic_id = art.topic_id
         GROUP BY topics.topic_id
