@@ -150,8 +150,7 @@ LIMIT %d
         author_objects = []
         if with_api:
             for obj in user_api_data:
-                print obj
-                obj[u'total_authority'] = id_to_auth[obj[u'user_id'][u'total_authority']]
+                obj[u'total_authority'] = id_to_auth[obj[u'user_id']][u'total_authority']
                 author_objects.append(obj)
         else:
             author_objects = id_to_auth.values()
