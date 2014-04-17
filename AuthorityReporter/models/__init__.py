@@ -126,19 +126,22 @@ FROM topics
         :rtype: list
         """
 
-        self.cursor.execute(u"""
-SELECT users.user_id, users.user_name, SUM(articles_users.contribs * articles.global_authority) AS auth
-FROM topics
-  INNER JOIN articles_topics ON topics.name = '%s' AND topics.topic_id = articles_topics.topic_id
-  INNER JOIN articles_users ON articles_topics.article_id = articles_users.article_id
-                               AND articles_topics.wiki_id = articles_users.wiki_id
-  INNER JOIN articles ON articles.article_id = articles_users.article_id AND articles.wiki_id = articles_users.wiki_id
-  INNER JOIN users ON articles_users.user_id = users.user_id
-GROUP BY users.user_id
-ORDER BY auth DESC
-LIMIT %d
--- selects the most influential authors for a given topic
-    """ % (self.db.escape_string(self.topic), limit))
+        try:
+            self.cursor.execute(u"""
+    SELECT users.user_id, users.user_name, SUM(articles_users.contribs * articles.global_authority) AS auth
+    FROM topics
+      INNER JOIN articles_topics ON topics.name = '%s' AND topics.topic_id = articles_topics.topic_id
+      INNER JOIN articles_users ON articles_topics.article_id = articles_users.article_id
+                                   AND articles_topics.wiki_id = articles_users.wiki_id
+      INNER JOIN articles ON articles.article_id = articles_users.article_id AND articles.wiki_id = articles_users.wiki_id
+      INNER JOIN users ON articles_users.user_id = users.user_id
+    GROUP BY users.user_id
+    ORDER BY auth DESC
+    LIMIT %d
+    -- selects the most influential authors for a given topic
+        """ % (self.db.escape_string(self.topic), limit))
+        except UnicodeEncodeError:
+            return []
 
         user_data = self.cursor.fetchall()
 
