@@ -117,13 +117,12 @@ def wikis_for_topic_xls(topic):
     wkbk = xlwt.Workbook()
     wksht = wkbk.add_sheet(topic)
     titles = [u"Wiki ID", u"Wiki Name", u"Wiki URL", u"Authority"]
-    wikis = TopicModel(topic, args).get_wikis(limit=200)[u'wikis']
-    print wikis
+    response = TopicModel(topic, args).get_wikis(limit=200)
     keys = [u'id', u'title', u'url', u'authority']
     map(lambda (cell, title): wksht.write(0, cell, title), enumerate(titles))
-    map(lambda (row, wiki): map(lambda (cell, key): wksht.write(row+1, cell, wiki[key]),
-                                enumerate(keys)),
-        enumerate(wikis))
+    map(lambda (row, wiki_id): map(lambda (cell, key): wksht.write(row+1, cell, response[u'wikis'][wiki_id][key]),
+                                   enumerate(keys)),
+        enumerate(response[u'wiki_ids']))
 
     return excel_response(wkbk, filename=u"%s-wikis.xls" % topic)
 
