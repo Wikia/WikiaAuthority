@@ -63,7 +63,7 @@ class TopicModel(BaseModel):
     ORDER BY auth DESC
     LIMIT %d
     """ % (self.db.escape_string(self.topic), limit))
-        ordered_db_results = [(y[0], y[1], str(y[2]), str(y[3]), y[4]) for y in self.cursor.fetchall()]
+        ordered_db_results = [(y[0], y[1], unicode(y[2]), unicode(y[3]), y[4]) for y in self.cursor.fetchall()]
         url_to_ids = defaultdict(list)
         map(lambda x: url_to_ids[x[0]].append(x[3]), ordered_db_results)
 
@@ -71,11 +71,7 @@ class TopicModel(BaseModel):
 
         ordered_page_results = []
         for url, wiki_name, wiki_id, page_id, authority in ordered_db_results:
-            print url_to_articles[url]
-            print url_to_articles[url].keys()
-            print page_id
-            api_result = url_to_articles[url].get(int(page_id), url_to_articles[url].get(int(page_id), {}))
-            result = dict(base_url=url, **api_result)
+            result = dict(base_url=url, **url_to_articles[url].get(unicode(page_id), {}))
             result[u'full_url'] = (result.get(u'base_url', '').strip(u'/') + result.get(u'url', ''))
             result[u'wiki'] = wiki_name
             result[u'authority'] = authority
