@@ -160,9 +160,9 @@ def users_for_topic(topic):
     Shows the top 10 users for a topic
     """
     global args
-    return render_template(u'authors.html',
+    return render_template(u'topic_authors.html',
                            authors=TopicModel(topic, args).get_users(),
-                           wiki_api_data={u'title': u'Global Authors for %s' % topic, u'url': u'http://www.wikia.com/'})
+                           topic=topic)
 
 
 @app.route(u'/topic/<topic>/users/xls/')
