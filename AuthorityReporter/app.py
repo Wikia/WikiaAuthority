@@ -58,6 +58,7 @@ def autocomplete_js():
     This allows JS typeahead for wikis on the homepage
     """
     global args
+    return render_template('v2_index.html')
     wikis = WikiModel.all_wikis(args)
     return Response(u"var wikis = %s;" % json.dumps(wikis),
                     mimetype=u"application/javascript",
