@@ -22,6 +22,12 @@ class BaseModel():
         self.db, self.cursor = get_db_and_cursor(args)
 
 
+def get_page_response(tup):
+    current_url, ids = tup
+    response = requests.get(u'%s/api/v1/Articles/Details' % current_url, params=dict(ids=u','.join(ids)))
+    return current_url, dict(response.json().get(u'items', {}))
+
+
 class TopicModel(BaseModel):
 
     """
@@ -61,12 +67,7 @@ class TopicModel(BaseModel):
         url_to_ids = defaultdict(list)
         map(lambda x: url_to_ids[x[0]].append(x[2]), ordered_db_results)
 
-        def get_response(tup):
-            current_url, ids = tup
-            response = requests.get(u'%s/api/v1/Articles/Details' % current_url, params=dict(ids=u','.join(ids)))
-            return current_url, dict(response.json().get(u'items', {}))
-
-        results = Pool(processes=8).map_async(get_response, url_to_ids.items()).get()
+        results = Pool(processes=8).map_async(get_page_response, list(url_to_ids.items())).get()
         print results
         url_to_articles = dict(results)
 
