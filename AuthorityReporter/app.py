@@ -136,7 +136,7 @@ def pages_for_topic(topic):
     return render_template(u'topic_pages.html', topic=topic, pages=TopicModel(topic, args).get_pages())
 
 
-@app.route(u'/topic/<topic>/pages/xls')
+@app.route(u'/topic/<topic>/pages/xls/')
 def pages_for_topic_xls(topic):
     """
     Gets the excel download of the best pages for a topic

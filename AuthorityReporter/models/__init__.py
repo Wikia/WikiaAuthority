@@ -4,6 +4,7 @@ from nlp_services.authority import WikiAuthorTopicAuthorityService, WikiAuthorsT
 from nlp_services.authority import WikiTopicsToAuthorityService
 from collections import defaultdict, OrderedDict
 from nlp_services.caching import use_caching
+from multiprocessing import Pool
 import requests
 
 
@@ -58,11 +59,14 @@ class TopicModel(BaseModel):
     """ % (self.db.escape_string(self.topic), limit))
         ordered_db_results = [(y[0], y[1], str(y[2]), str(y[3]), y[4]) for y in self.cursor.fetchall()]
         url_to_ids = defaultdict(list)
-        url_to_articles = {}
         map(lambda x: url_to_ids[x[0]].append(x[2]), ordered_db_results)
-        for url, ids in url_to_ids.items():
-            response = requests.get(u'%s/api/v1/Articles/Details' % url, params=dict(ids=u','.join(ids)))
-            url_to_articles[url] = dict(response.json().get(u'items', {}))
+
+        def get_response(tup):
+            current_url, ids = tup
+            response = requests.get(u'%s/api/v1/Articles/Details' % current_url, params=dict(ids=u','.join(ids)))
+            return current_url, dict(response.json().get(u'items', {}))
+
+        url_to_articles = dict(Pool(processes=8).map_async(get_response, url_to_ids.items()))
 
         ordered_page_results = []
         for url, wiki_name, wiki_id, page_id, authority in ordered_db_results:
