@@ -140,11 +140,12 @@ LIMIT %d
 
                 user_api_data += response.json()[u'items']
 
-        id_to_auth = OrderedDict([(x[0], {u'id': x[0], u'user_name': x[1], u'authority': x[2]}) for x in user_data])
+        id_to_auth = OrderedDict([(x[0], {u'id': x[0], u'user_name': x[1], u'total_authority': x[2]})
+                                  for x in user_data])
         author_objects = []
         if with_api:
             for obj in user_api_data:
-                obj[u'total_authority'] = id_to_auth[obj[u'user_id'][u'authority']]
+                obj[u'total_authority'] = id_to_auth[obj[u'user_id'][u'total_authority']]
                 author_objects.append(obj)
         else:
             author_objects = id_to_auth.values()
