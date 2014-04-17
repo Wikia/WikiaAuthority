@@ -72,7 +72,7 @@ class TopicModel(BaseModel):
         ordered_page_results = []
         for url, wiki_name, wiki_id, page_id, authority in ordered_db_results:
             print url_to_articles[url]
-            print url_to_articles.keys()
+            print url_to_articles[url].keys()
             print page_id
             api_result = url_to_articles[url].get(int(page_id), url_to_articles[url].get(int(page_id), {}))
             result = dict(base_url=url, **api_result)
