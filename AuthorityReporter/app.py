@@ -201,6 +201,15 @@ def pages_for_user(user_name):
     return render_template(u'user_pages.html', user_name=user_name, pages=UserModel(user_name, args).get_pages())
 
 
+@app.route(u'/user/<user_name>/topics/')
+def pages_for_user(user_name):
+    """
+    Shows the top 10 topics for a user
+    """
+    global args
+    return render_template(u'topics.html', user_name=user_name, pages=UserModel(user_name, args).get_topics())
+
+
 @app.route(u'/user/<user_name>/wikis/')
 def wikis_for_user(user_name):
     """
