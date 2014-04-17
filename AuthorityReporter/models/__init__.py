@@ -253,8 +253,11 @@ class WikiModel(BaseModel):
         if limit:
             sql += u" LIMIT %d" % limit
 
+
+        self.cursor.execute(sql)
+
         authors_dict = OrderedDict([(x[0], dict(id=x[0], name=x[1], total_authority=x[2]))
-                                    for x in self.cursor.fetchall(sql)])
+                                    for x in self.cursor.fetchall()])
 
         user_api_data = requests.get(self.api_data[u'url']+u'/api/v1/User/Details',
                                      params={u'ids': u",".join(map(str, authors_dict.keys())),
@@ -379,7 +382,6 @@ class WikiModel(BaseModel):
         authors_topics_sheet.write(0, 3, u"Score")
 
         # why is total_authority not there?
-        print author_authority
         all_total_authorities = [author.get(u'total_authority', 0) for author in author_authority]
         scaler = MinMaxScaler(all_total_authorities, enforced_min=0, enforced_max=100)
         pivot_counter = 1
