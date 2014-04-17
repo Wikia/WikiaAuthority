@@ -86,7 +86,7 @@ def spreadsheet_for_wiki(wiki_id):
     Generates a spreadsheet with topics, authors, and pages
     """
     global args
-    return excel_response(get_workbook_for_wiki(wiki_id), filename=u'wiki-%s-report.xls' % wiki_id)
+    return excel_response(get_workbook_for_wiki(args, wiki_id), filename=u'wiki-%s-report.xls' % wiki_id)
 
 
 @app.route(u'/wiki_autocomplete.js')
