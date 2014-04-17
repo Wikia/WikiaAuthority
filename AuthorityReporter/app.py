@@ -118,6 +118,7 @@ def wikis_for_topic_xls(topic):
     wksht = wkbk.add_sheet(topic)
     titles = [u"Wiki ID", u"Wiki Name", u"Wiki URL", u"Authority"]
     wikis = TopicModel(topic, args).get_wikis(limit=200)[u'wikis']
+    print wikis
     keys = [u'id', u'title', u'url', u'authority']
     map(lambda (cell, title): wksht.write(0, cell, title), enumerate(titles))
     map(lambda (row, wiki): map(lambda (cell, key): wksht.write(row+1, cell, wiki[key]),
