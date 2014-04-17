@@ -379,6 +379,7 @@ class WikiModel(BaseModel):
         authors_topics_sheet.write(0, 3, u"Score")
 
         # why is total_authority not there?
+        print author_authority
         all_total_authorities = [author.get(u'total_authority', 0) for author in author_authority]
         scaler = MinMaxScaler(all_total_authorities, enforced_min=0, enforced_max=100)
         pivot_counter = 1
