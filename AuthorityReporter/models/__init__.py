@@ -248,11 +248,10 @@ class WikiModel(BaseModel):
                    INNER JOIN articles ON articles.article_id = au.article_id AND articles.wiki_id = %s
         GROUP BY users.user_id
         ORDER BY total_authority DESC
-        """
+        """ % (self.wiki_id, self.wiki_id)
 
         if limit:
             sql += u" LIMIT %d" % limit
-
 
         self.cursor.execute(sql)
 
