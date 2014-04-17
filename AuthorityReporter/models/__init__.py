@@ -107,7 +107,7 @@ FROM topics
 
         wikis = result.json().get(u'items', {})
         for wid, auth in wids_to_auth.items():
-            wikis[wid][u'authority'] = auth
+            wikis[unicode(wid)][u'authority'] = auth
 
         return dict(wikis=wikis, wiki_ids=wiki_ids)
 
