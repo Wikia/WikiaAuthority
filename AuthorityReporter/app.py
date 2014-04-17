@@ -148,7 +148,7 @@ def pages_for_topic_xls(topic):
     keys = [u'wiki_id', u'page_id', u'wiki', u'full_url', u'title', u'authority']
     pages = TopicModel(topic, args).get_pages(1000)
     map(lambda (cell, title): worksheet.write(0, cell, title), enumerate(titles))
-    map(lambda (row, page): map(lambda (cell, key): worksheet.write(row+1, cell, page[key]),
+    map(lambda (row, page): map(lambda (cell, key): worksheet.write(row+1, cell, page.get(key, u'?')),
                                 enumerate(keys)),
         enumerate(pages))
     return excel_response(workbook, filename=u'%s-users.xls' % topic)
