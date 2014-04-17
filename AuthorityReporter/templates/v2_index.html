@@ -20,6 +20,7 @@
               <button id="wiki-pages" type="submit" class="btn btn-default">Articles</button>
               <button id="wiki-topics" type="submit" class="btn btn-default">Topics</button>
               <button id="wiki-users" type="submit" class="btn btn-default">Users</button>
+              <a id="wiki-excel" href="#" class="btn btn-default btn-lg" role="button"><span class="glyphicon glyphicon-th-list"></span> Full Report</a>
           </form>
       </div>
         <div class="row" id="user-search">
@@ -75,6 +76,10 @@
                 dom.closest('form').attr('action', '/user/'+$('#user-search-text').val()+'/'
                             +dom.attr('id').replace('user-', '')+'/');
             });
+
+            $('#wiki-excel'.on('click', function() {
+                $(this).attr('href', '/wiki/'+wikis[$("#wiki-text-picker").val()]+'/xls')
+            }))
         });
     </script>
   </body>
