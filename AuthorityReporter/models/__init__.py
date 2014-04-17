@@ -258,6 +258,10 @@ class WikiModel(BaseModel):
         authors_dict = OrderedDict([(x[0], dict(id=x[0], name=x[1], total_authority=x[2]))
                                     for x in self.cursor.fetchall()])
 
+        print requests.get(self.api_data[u'url']+u'/api/v1/User/Details',
+                                     params={u'ids': u",".join(map(str, authors_dict.keys())),
+                                             u'format': u'json'}).url
+
         user_api_data = requests.get(self.api_data[u'url']+u'/api/v1/User/Details',
                                      params={u'ids': u",".join(map(str, authors_dict.keys())),
                                              u'format': u'json'}).json()[u'items']
