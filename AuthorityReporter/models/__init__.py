@@ -260,17 +260,13 @@ class WikiModel(BaseModel):
         authors_dict = OrderedDict([(x[0], dict(id=x[0], name=x[1], total_authority=x[2]))
                                     for x in self.cursor.fetchall()])
 
-        user_api_data = requests.get(self.api_data[u'url']+u'/api/v1/User/Details',
-                                     params={u'ids': u",".join(map(str, authors_dict.keys())),
-                                             u'format': u'json'}).json()[u'items']
-
-        print authors_dict.keys()
-
         if limit:
+            user_api_data = requests.get(self.api_data[u'url']+u'/api/v1/User/Details',
+                                         params={u'ids': u",".join(map(str, authors_dict.keys())),
+                                                 u'format': u'json'}).json()[u'items']
             for user_data in user_api_data:
-                if user_data[u'name'] in authors_dict:
-                    authors_dict[user_data[u'name']].update(user_data)
-                    authors_dict[user_data[u'name']][u'url'] = authors_dict[user_data[u'name']][u'url'][1:]
+                authors_dict[user_data[u'id']].update(user_data)
+                authors_dict[user_data[u'id']][u'url'] = authors_dict[user_data[u'name']][u'url'][1:]
 
         return authors_dict.values()
 
