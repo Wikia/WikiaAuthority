@@ -13,26 +13,16 @@
     <h1><a href="/"><span class="glyphicon glyphicon-home"></span></a> Most Authoritative Authors</h1>
     <h2>{{ topic }}</h2>
     <a href="/topic/{{topic}}/users/xls" class="btn btn-default btn-lg" role="button"><span class="glyphicon glyphicon-th-list"></span> Get Excel</a>
-    {% for author in authors%}
     <div class="well">
-      <div class="row">
-        <div class="col-md-3 wiki-image">
-            <a href="http://www.wikia.com/{{ author['url'] }}"><img class="img-thumbnail" src="{{ author['avatar'] }}" alt=""/></a>
-        </div>
-        <div class="col-md-9 content-wrapper">
-          <div class="row">
-            <div class="row">
-              <h3 style="text-align: left;"><a href="http://www.wikia.com/{{ author['url'] }}">{{ author.name }}</a></h3>
+        <div class="row">
+            {% for author in authors%}
+            <div class="col-xs-3" style="margin-bottom: 15px;">
+                <div class="row" style="text-align: center;"><a href="http://www.wikia.com/{{ author['url'] }}"><img class="img-thumbnail" src="{{ author['avatar'] }}" alt=""/></a></div>
+                <div class="row" style="text-align: center;"><a href="http://www.wikia.com/{{ author['url'] }}">{{ author.name }}</a></div>
+                <div class="row" style="text-align: center;"><small>Authority: <em>{{ author.total_authority }}</em></small></div>
             </div>
-            <div class="row">
-                <h4>Authority</h4>
-                <em>{{ author.total_authority }}</em>
-            </div>
-          </div>
+            {% endfor %}
         </div>
-      </div>
-    </div>
-    {% endfor %}
     </div>
   </body>
 </html>
