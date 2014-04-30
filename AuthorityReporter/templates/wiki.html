@@ -19,13 +19,13 @@
         </div>
     </div>
     <div class="well">
-        <div class="row" style="margin-bottom: 10px;">
+        <div class="row">
         {% for wiki in wiki_ids %}
-          <div class="col-md-3 col-sm-3">
+          <div class="col-md-3 col-sm-3" style="margin-bottom: 15px;">
               <div class="row" style="text-align: center; height:105px;">
                 <img class="img-thumbnail"
                      src="{% if wikis[wiki]['image'] %}{{wikis[wiki]['image']}}{% else %}http://slot1.images.wikia.nocookie.net/__cb62407/common/extensions/wikia/Search/images/wiki_image_placeholder.png{% endif %}"
-                     alt="" style="max-height: 100px; margin: 0 auto;"/>
+                     alt="" style="max-height: 100px; position: relative; bottom:0;"/>
               </div>
               <div class="row" style="text-align: center">{{wikis[wiki]['title']}}</div>
           </div>
