@@ -27,7 +27,7 @@
                      src="{% if wikis[wiki]['image'] %}{{wikis[wiki]['image']}}{% else %}http://slot1.images.wikia.nocookie.net/__cb62407/common/extensions/wikia/Search/images/wiki_image_placeholder.png{% endif %}"
                      alt="" style="max-height: 100px; position: relative; bottom:0;"/>
               </div>
-              <div class="row" style="text-align: center">{{wikis[wiki]['title']}}</div>
+              <div class="row" style="text-align: center">{{wikis[wiki]['title']|truncate(20)}}</div>
           </div>
         {% endfor %}
         </div>
