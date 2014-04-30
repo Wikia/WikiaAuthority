@@ -547,17 +547,16 @@ class UserModel(BaseModel):
         url_to_ids = defaultdict(list)
         ordered_db_results = [(y[0], str(y[1]), str(y[2])) for y in self.cursor.fetchall()]
         map(lambda x: url_to_ids[x[0]].append(x[1]), ordered_db_results)
-        url_to_wikis = dict([(z[0], z[2]) for z in ordered_db_results])
         url_to_articles = dict()
         for url, ids in url_to_ids.items():
             response = requests.get(u'%s/api/v1/Articles/Details' % url, params=dict(ids=u','.join(ids)))
             url_to_articles[url] = dict(response.json().get(u'items', {}))
 
         ordered_page_results = []
-        for url, page_id in ordered_db_results:
+        for url, page_id, wiki_title in ordered_db_results:
             result = dict(base_url=url, **url_to_articles[url].get(page_id, {}))
             result[u'full_url'] = (result.get(u'base_url', '').strip(u'/') + result.get(u'url', ''))
-            result[u'wiki_title'] = url_to_wikis[url]
+            result[u'wiki_title'] = wiki_title
             ordered_page_results.append(result)
 
         return ordered_page_results
