@@ -264,6 +264,8 @@ class WikiModel(BaseModel):
                                      params={u'ids': u",".join(map(str, authors_dict.keys())),
                                              u'format': u'json'}).json()[u'items']
 
+        print authors_dict.keys()
+
         if limit:
             for user_data in user_api_data:
                 if user_data[u'name'] in authors_dict:
