@@ -218,7 +218,7 @@ def wikis_for_user(user_name):
     """
     global args
     data = UserModel(user_name, args).get_wikis()
-    return render_template(u'wikis_for_user.html.html', wikis=data, wiki_ids=data.keys(),
+    return render_template(u'wikis_for_user.html', wikis=data, wiki_ids=data.keys(),
                            user_name=user_name)
 
 
