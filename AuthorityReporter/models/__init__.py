@@ -535,7 +535,7 @@ class UserModel(BaseModel):
         :rtype: list
         """
         self.cursor.execute(u"""
-    SELECT wikis.url, articles.article_id, wikis.title,
+    SELECT wikis.url, articles.article_id, wikis.title
     FROM users
       INNER JOIN articles_users ON users.user_name = '%s' AND articles_users.user_id = users.user_id
       INNER JOIN wikis on wikis.wiki_id = articles_users.wiki_id
