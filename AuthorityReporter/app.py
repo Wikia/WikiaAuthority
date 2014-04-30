@@ -198,7 +198,8 @@ def pages_for_user(user_name):
     Shows the top 10 pages for a user
     """
     global args
-    return render_template(u'user_pages.html', user_name=user_name, pages=UserModel(user_name, args).get_pages())
+    model = UserModel(user_name, args)
+    return render_template(u'user_pages.html', user_name=user_name, pages=model.get_pages(limit=12))
 
 
 @app.route(u'/user/<user_name>/topics/')
