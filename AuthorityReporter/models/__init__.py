@@ -152,7 +152,9 @@ FROM topics
                 response = requests.get(u'http://www.wikia.com/api/v1/User/Details',
                                         params={u'ids': u','.join([str(x[0]) for x in user_data[i:i+25]])})
 
-                user_api_data += response.json()[u'items']
+                response_json = response.json()
+                if u'items' in response_json:
+                    user_api_data += response_json[u'items']
 
         id_to_auth = OrderedDict([(x[0], {u'id': x[0], u'user_name': x[1], u'total_authority': x[2]})
                                   for x in user_data])
