@@ -14,12 +14,15 @@
     <a href="/topic/{{topic}}/wikis/xls" class="btn btn-default btn-lg" role="button"><span class="glyphicon glyphicon-th-list"></span> Get Excel</a>
 
     <div class="well">
-        {% for wiki in wiki_ids %}
         <div class="row">
-          <div class="col-md-3"><img src="{{wikis[wiki]['image']}}" height="50px" alt="" /></div>
-          <div class="col-md-9">{{wikis[wiki]['title']}}</div>
-        </div>
+        {% for wiki in wiki_ids %}
+
+          <div class="col-md-3">
+              <div class="row">"<img src="{{wikis[wiki]['image']}}" height="100px" alt="" /></div>
+              <div class="row">{{wikis[wiki]['title']}}</div>
+          </div>
         {% endfor %}
+        </div>
     </div>
   </body>
 </html>
