@@ -117,7 +117,7 @@ def wikis_for_topic(topic):
     Shows the top wikis for a topic
     """
     global args
-    return render_template(u'wiki.html', topic=topic, **TopicModel(topic, args).get_wikis())
+    return render_template(u'wiki.html', topic=topic, **TopicModel(topic, args).get_wikis(limit=12))
 
 
 @app.route(u'/topic/<topic>/wikis/xls/')
