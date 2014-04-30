@@ -218,8 +218,8 @@ def wikis_for_user(user_name):
     """
     global args
     data = UserModel(user_name, args).get_wikis()
-    return render_template(u'wiki.html', wikis=data, wiki_ids=data.keys(),
-                           topic=u"Top Wikis for User <i>%s</i>" % user_name)
+    return render_template(u'wikis_for_user.html.html', wikis=data, wiki_ids=data.keys(),
+                           user_name=user_name)
 
 
 @app.route(u'/')

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Test Search App</title>
+    <!-- Bootstrap -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="/static/css/bootstrap-glyphicons.css" rel="stylesheet" media="screen">
+    <link href="/static/css/main.css" rel="stylesheet" media="screen">
+  </head>
+  <body class="container">
+    <script src="http://code.jquery.com/jquery.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <div class="row">
+        <div class="col-sm-9">
+            <h3>Most Authoritative Wikis for User: <i>{{user_name}}</i></h3>
+        </div>
+        <div class="col-sm-3">
+            <a href="/topic/{{topic}}/wikis/xls" class="btn btn-default pull-right" style="margin-top: 15px;" role="button"><span class="glyphicon glyphicon-th-list"></span> Get Excel</a>
+        </div>
+    </div>
+    <div class="well">
+        <div class="row">
+        {% for wiki in wiki_ids %}
+          <div class="col-md-3 col-sm-3" style="margin-bottom: 15px;">
+              <div class="row" style="text-align: center; height:105px;">
+                <img class="img-thumbnail"
+                     src="{% if wikis[wiki]['image'] %}{{wikis[wiki]['image']}}{% else %}http://slot1.images.wikia.nocookie.net/__cb62407/common/extensions/wikia/Search/images/wiki_image_placeholder.png{% endif %}"
+                     alt="" style="max-height: 100px; position: relative; bottom:0;"/>
+              </div>
+              <div class="row" style="text-align: center">{{wikis[wiki]['title']}}</div>
+          </div>
+        {% endfor %}
+        </div>
+    </div>
+  </body>
+</html>
