@@ -12,31 +12,15 @@
     <script src="/static/js/bootstrap.min.js"></script>
     <h1><a href="/"><span class="glyphicon glyphicon-home"></span></a> Most Authoritative Authors</h1>
     <h2>{{ wiki_api_data['title'] }}</h2>
-    {% for author in authors%}
     <div class="well">
       <div class="row">
-        <div class="col-md-3 wiki-image">
-            <a href="{{ wiki_api_data['url'] }}{{ author['url'] }}"><img class="img-thumbnail" src="{{ author['avatar'] }}" alt=""/></a>
-        </div>
-        <div class="col-md-9 content-wrapper">
-          <div class="row">
-            <div class="row">
-              <h3 style="text-align: left;"><a href="{{ wiki_api_data['url'] }}{{ author['url'] }}">{{ author.name }}</a></h3>
+        {% for author in authors%}
+            <div class="col-xs-3">
+                <div class="row"><a href="{{ wiki_api_data['url'] }}{{ author['url'] }}"><img class="img-thumbnail" src="{{ author['avatar'] }}" alt=""/></a></div>
+                <div class="row"><a href="{{ wiki_api_data['url'] }}{{ author['url'] }}">{{ author.name }}</a></div>
+                <div class="row">Authority: <em>{{ author.total_authority }}</em></div>
             </div>
-            <div class="row">
-                <h4>Authority</h4>
-                <em>{{ author.total_authority }}</em>
-                {% if author.topics %}
-                <h4>Top Topics</h4>
-                <ul>
-                    {% for topic, score in author.topics %}
-                    <li>{{ topic }} -- <i>{{score}}</i></li>
-                    {% endfor %}
-                </ul>
-                {% endif %}
-            </div>
-          </div>
-        </div>
+        {% endfor %}
       </div>
     </div>
     {% endfor %}
