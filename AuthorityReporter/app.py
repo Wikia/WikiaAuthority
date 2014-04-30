@@ -217,7 +217,7 @@ def wikis_for_user(user_name):
     Shows the top 10 wikis for a user
     """
     global args
-    data = UserModel(user_name, args).get_wikis()
+    data = UserModel(user_name, args).get_wikis(limit=12)
     return render_template(u'wikis_for_user.html', wikis=data, wiki_ids=data.keys(),
                            user_name=user_name)
 
