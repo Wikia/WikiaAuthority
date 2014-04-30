@@ -266,8 +266,9 @@ class WikiModel(BaseModel):
 
         if limit:
             for user_data in user_api_data:
-                authors_dict[user_data[u'name']].update(user_data)
-                authors_dict[user_data[u'name']][u'url'] = authors_dict[user_data[u'name']][u'url'][1:]
+                if user_data[u'name'] in authors_dict:
+                    authors_dict[user_data[u'name']].update(user_data)
+                    authors_dict[user_data[u'name']][u'url'] = authors_dict[user_data[u'name']][u'url'][1:]
 
         return authors_dict.values()
 
