@@ -10,26 +10,34 @@
   <body class="container">
     <script src="http://code.jquery.com/jquery.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
-    <h1>Top Pages for {{topic}}</h1>
-    <a href="/topic/{{topic}}/pages/xls" class="btn btn-default btn-lg" role="button"><span class="glyphicon glyphicon-th-list"></span> Get Excel</a>
-    <div class="well">
-    {% for page in pages %}
-        <div class="col-xs-3" style="margin-bottom: 15px;">
-            <div class="row" style="height: 100px; text-align: center;">
-                {% if 'thumbnail' in page %}
-                <img src="{{page['thumbnail']}}" style="max-height: 100px;" alt="" />
-                {% else %}
-                <img src="http://slot1.images.wikia.nocookie.net/__cb62407/common/extensions/wikia/Search/images/wiki_image_placeholder.png" style="max-height: 50px;" alt="" />
-                {% endif %}
-            </div>
-            <div class="row" style="text-align: center;">
-                <a href="{{page['full_url']}}">{{page['title']}}</a>
-            </div>
-            <div class="row" style="text-align: center;">
-                <i>{{ page['wiki'] }}</i>
-            </div>
+    <div class="row">
+        <div class="col-sm-9">
+            <h1>Top Pages for {{topic}}</h1>
         </div>
-    {% endfor %}
+        <div class="col-sm-3">
+            <a href="/topic/{{topic}}/pages/xls" class="btn btn-default btn-lg" role="button" style="margin-top:15px"><span class="glyphicon glyphicon-th-list"></span> Get Excel</a>
+        </div>
+    </div>
+    <div class="well">
+        <div class="row">
+        {% for page in pages %}
+            <div class="col-xs-3" style="margin-bottom: 15px;">
+                <div class="row" style="height: 100px; text-align: center;">
+                    {% if 'thumbnail' in page %}
+                    <img src="{{page['thumbnail']}}" style="max-height: 100px;" alt="" />
+                    {% else %}
+                    <img src="http://slot1.images.wikia.nocookie.net/__cb62407/common/extensions/wikia/Search/images/wiki_image_placeholder.png" style="max-height: 50px;" alt="" />
+                    {% endif %}
+                </div>
+                <div class="row" style="text-align: center;">
+                    <a href="{{page['full_url']}}">{{page['title']}}</a>
+                </div>
+                <div class="row" style="text-align: center;">
+                    <i>{{ page['wiki'] }}</i>
+                </div>
+            </div>
+        {% endfor %}
+        </div>
     </div>
   </body>
 </html>
