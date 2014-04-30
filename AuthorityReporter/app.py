@@ -65,7 +65,7 @@ def users_for_wiki(wiki_id):
     """
     global args
     model = WikiModel(wiki_id, args)
-    return render_template(u'authors.html', authors=model.get_authors(), wiki_api_data=model.api_data)
+    return render_template(u'authors.html', authors=model.get_authors(limit=12), wiki_api_data=model.api_data)
 
 
 @app.route(u'/wiki/<wiki_id>/pages/')

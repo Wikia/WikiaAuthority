@@ -16,9 +16,9 @@
       <div class="row">
         {% for author in authors%}
             <div class="col-xs-3">
-                <div class="row"><a href="{{ wiki_api_data['url'] }}{{ author['url'] }}"><img class="img-thumbnail" src="{{ author['avatar'] }}" alt=""/></a></div>
-                <div class="row"><a href="{{ wiki_api_data['url'] }}{{ author['url'] }}">{{ author.name }}</a></div>
-                <div class="row">Authority: <em>{{ author.total_authority }}</em></div>
+                <div class="row" style="text-align: center;"><a href="{{ wiki_api_data['url'] }}{{ author['url'] }}"><img class="img-thumbnail" src="{{ author['avatar'] }}" alt=""/></a></div>
+                <div class="row" style="text-align: center;"><a href="{{ wiki_api_data['url'] }}{{ author['url'] }}">{{ author.name }}</a></div>
+                <div class="row" style="text-align: center;">Authority: <em>{{ author.total_authority }}</em></div>
             </div>
         {% endfor %}
       </div>
