@@ -15,12 +15,12 @@
     {% for doc in pages %}
     <div class="well">
       <div class="row">
-        <div class="col-md-3 wiki-image">
+        <div class="col-sm-3 wiki-image">
             {% if doc['thumbnail'] %}
            <a href="/wiki/{{wiki_id}}/page/{{doc['id']}}"><img class="img-thumbnail" src="{{ doc['thumbnail'] }}" alt=""/></a>
             {% endif %}
         </div>
-        <div class="col-md-9 content-wrapper">
+        <div class="col-sm-9 content-wrapper">
           <div class="row">
             <div class="row">
               <h3 style="text-align: left;"><a href="/wiki/{{wiki_id}}/page/{{doc['id']}}">{{ doc['title'] }}</a></h3>
