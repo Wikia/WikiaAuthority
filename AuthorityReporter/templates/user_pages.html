@@ -13,12 +13,12 @@
     <h1>Top Pages for {{user_name}}</h1>
     {% for page in pages %}
     <div class="well row">
-        <div class="col-md-3">
+        <div class="col-sm-3">
             {% if 'thumbnail' in page %}
             <img src="{{page['thumbnail']}}" alt="" />
             {% endif %}
         </div>
-        <div class="col-md-9">
+        <div class="col-sm-9">
             <h3><a href="{{page['full_url']}}">{{page['title']}}</a></h3>
             <p>{{page['abstract']}}</p>
         </div>
