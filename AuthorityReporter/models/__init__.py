@@ -266,7 +266,7 @@ class WikiModel(BaseModel):
                                                  u'format': u'json'}).json()[u'items']
             for user_data in user_api_data:
                 authors_dict[user_data[u'user_id']].update(user_data)
-                authors_dict[user_data[u'user_id']][u'url'] = authors_dict[user_data[u'name']][u'url'][1:]
+                authors_dict[user_data[u'user_id']][u'url'] = authors_dict[user_data[u'user_id']][u'url'][1:]
 
         return authors_dict.values()
 
