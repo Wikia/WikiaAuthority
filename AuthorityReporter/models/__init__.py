@@ -205,7 +205,7 @@ class WikiModel(BaseModel):
         FROM articles_topics art INNER JOIN topics ON art.wiki_id = %s AND topics.topic_id = art.topic_id
         INNER JOIN articles ON art.wiki_id = articles.wiki_id AND articles.article_id = art.article_id
         GROUP BY topics.topic_id
-        ORDER BY authority
+        ORDER BY authority DESC
         """ % self.wiki_id
 
         if limit:

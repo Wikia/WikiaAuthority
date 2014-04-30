@@ -25,13 +25,22 @@
             </div>
             <div class="row">
                 <h4>Authority</h4>
-                <em>{{ topic.authority }}</em>
+                <em>{{ topic['authority'] }}</em>
+                {%  if topic.authors %}
                 <h4>Top Authors</h4>
-                <ul>
+                <div class="row">
                     {% for author in topic.authors %}
-                    <li>{{ author }}</li>
+                    <div class="col-xs-2">
+                        <div class="row" style="max-height: 50px;">
+                            <img src="{{ author['avatar'] }}" style="max-height:50px" alt="" />
+                        </div>
+                        <div class="row">
+                            {{ author['name'] }}
+                        </div>
+                    </div>
                     {% endfor %}
-                </ul>
+                </div>
+                {% endif %}
             </div>
           </div>
         </div>
