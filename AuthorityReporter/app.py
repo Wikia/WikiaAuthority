@@ -142,7 +142,7 @@ def pages_for_topic(topic):
     Shows the top pages for a topic
     """
     global args
-    return render_template(u'topic_pages.html', topic=topic, pages=TopicModel(topic, args).get_pages())
+    return render_template(u'topic_pages.html', topic=topic, pages=TopicModel(topic, args).get_pages(limit=12))
 
 
 @app.route(u'/topic/<topic>/pages/xls/')
