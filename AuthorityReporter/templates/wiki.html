@@ -17,7 +17,7 @@
         <div class="row">
         {% for wiki in wiki_ids %}
           <div class="col-md-3 col-sm-3">
-              <div class="row"><img src="{{wikis[wiki]['image']}}"  alt="" style="max-height: 100px; margin: 0 auto;"/></div>
+              <div class="row" style="text-align: center""><img class="img-thumbnail" src="{{wikis[wiki]['image']}}"  alt="" style="max-height: 100px; margin: 0 auto;"/></div>
               <div class="row" style="text-align: center">{{wikis[wiki]['title']}}</div>
           </div>
         {% endfor %}
