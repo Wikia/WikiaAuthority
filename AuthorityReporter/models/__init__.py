@@ -535,7 +535,7 @@ class UserModel(BaseModel):
         :rtype: list
         """
         self.cursor.execute(u"""
-    SELECT wikis.url, articles.article_id
+    SELECT wikis.url, articles.article_id, wikis.title,
     FROM users
       INNER JOIN articles_users ON users.user_name = '%s' AND articles_users.user_id = users.user_id
       INNER JOIN wikis on wikis.wiki_id = articles_users.wiki_id
@@ -545,8 +545,10 @@ class UserModel(BaseModel):
     -- selects the most important pages a user has contributed to the most to
     """ % (self.db.escape_string(self.user_name), limit))
         url_to_ids = defaultdict(list)
-        ordered_db_results = [(y[0], str(y[1])) for y in self.cursor.fetchall()]
+        ordered_db_results = [(y[0], str(y[1]), str(y[2])) for y in self.cursor.fetchall()]
         map(lambda x: url_to_ids[x[0]].append(x[1]), ordered_db_results)
+        url_to_wikis = dict()
+        map(lambda x: url_to_wikis[x[0]].append(x[2]), ordered_db_results)
         url_to_articles = dict()
         for url, ids in url_to_ids.items():
             response = requests.get(u'%s/api/v1/Articles/Details' % url, params=dict(ids=u','.join(ids)))
@@ -556,6 +558,7 @@ class UserModel(BaseModel):
         for url, page_id in ordered_db_results:
             result = dict(base_url=url, **url_to_articles[url].get(page_id, {}))
             result[u'full_url'] = (result.get(u'base_url', '').strip(u'/') + result.get(u'url', ''))
+            result[u'wiki_title'] = url_to_wikis[url]
             ordered_page_results.append(result)
 
         return ordered_page_results

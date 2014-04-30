@@ -11,18 +11,24 @@
     <script src="http://code.jquery.com/jquery.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>
     <h1>Top Pages for {{user_name}}</h1>
-    {% for page in pages %}
     <div class="well row">
-        <div class="col-sm-3">
-            {% if 'thumbnail' in page %}
-            <img src="{{page['thumbnail']}}" alt="" />
-            {% endif %}
-        </div>
-        <div class="col-sm-9">
-            <h3><a href="{{page['full_url']}}">{{page['title']}}</a></h3>
-            <p>{{page['abstract']}}</p>
-        </div>
+        {% for page in pages %}
+            <div class="col-xs-3" style="margin-bottom: 15px;">
+                <div class="row" style="height: 50px; text-align: center;">
+                    {% if 'thumbnail' in page %}
+                    <img src="{{page['thumbnail']}}" style="max-height: 50px;" alt="" />
+                    {% else %}
+                    <img src="http://slot1.images.wikia.nocookie.net/__cb62407/common/extensions/wikia/Search/images/wiki_image_placeholder.png" style="max-height: 50px;" alt="" />
+                    {% endif %}
+                </div>
+                <div class="row">
+                    <a href="{{page['full_url']}}">{{page['title']}}</a>
+                </div>
+                <div class="row">
+                    <i>{{ page['wiki_title'] }}</i>
+                </div>
+            </div>
+        {% endfor %}
     </div>
-    {% endfor %}
   </body>
 </html>
