@@ -547,8 +547,7 @@ class UserModel(BaseModel):
         url_to_ids = defaultdict(list)
         ordered_db_results = [(y[0], str(y[1]), str(y[2])) for y in self.cursor.fetchall()]
         map(lambda x: url_to_ids[x[0]].append(x[1]), ordered_db_results)
-        url_to_wikis = dict()
-        map(lambda x: url_to_wikis[x[0]].append(x[2]), ordered_db_results)
+        url_to_wikis = dict([(z[0], z[2]) for z in ordered_db_results])
         url_to_articles = dict()
         for url, ids in url_to_ids.items():
             response = requests.get(u'%s/api/v1/Articles/Details' % url, params=dict(ids=u','.join(ids)))
