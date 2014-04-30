@@ -12,13 +12,15 @@
     <script src="/static/js/bootstrap.min.js"></script>
     <h1>{{topic}}</h1>
     <a href="/topic/{{topic}}/wikis/xls" class="btn btn-default btn-lg" role="button"><span class="glyphicon glyphicon-th-list"></span> Get Excel</a>
-    {% for wiki in wiki_ids %}
+
     <div class="well">
       <div class="row">
-        <h3>{{wikis[wiki]['title']}}</h3>
-        <img src="{{wikis[wiki]['image']}}" height="300px" alt="" />
+        <ul>
+        {% for wiki in wiki_ids %}
+            <li><img src="{{wikis[wiki]['image']}}" height="50px" alt="" /> {{wikis[wiki]['title']}}</li>
+        {% endfor %}
+        </ul>
       </div>
     </div>
-    {% endfor %}
   </body>
 </html>
