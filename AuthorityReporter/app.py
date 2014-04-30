@@ -170,7 +170,7 @@ def users_for_topic(topic):
     """
     global args
     return render_template(u'topic_authors.html',
-                           authors=TopicModel(topic, args).get_users(),
+                           authors=TopicModel(topic, args).get_users(limit=12),
                            topic=topic)
 
 
