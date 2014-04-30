@@ -13,9 +13,9 @@
     <h1><a href="/"><span class="glyphicon glyphicon-home"></span></a> Most Authoritative Authors</h1>
     <h2>{{ wiki_api_data['title'] }}</h2>
     <div class="well">
-      <div class="row" style="margin-bottom: 15px;">
+      <div class="row">
         {% for author in authors%}
-            <div class="col-xs-3">
+            <div class="col-xs-3" style="margin-bottom: 15px;">
                 <div class="row" style="text-align: center;"><a href="{{ wiki_api_data['url'] }}{{ author['url'] }}"><img class="img-thumbnail" src="{{ author['avatar'] }}" alt=""/></a></div>
                 <div class="row" style="text-align: center;"><a href="{{ wiki_api_data['url'] }}{{ author['url'] }}">{{ author.name }}</a></div>
                 <div class="row" style="text-align: center;"><small>Authority: <em>{{ author.total_authority }}</em></small></div>
