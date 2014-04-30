@@ -16,10 +16,9 @@
     <div class="well">
         <div class="row">
         {% for wiki in wiki_ids %}
-
           <div class="col-md-3">
-              <div class="row">"<img src="{{wikis[wiki]['image']}}" height="100px" alt="" /></div>
-              <div class="row">{{wikis[wiki]['title']}}</div>
+              <img src="{{wikis[wiki]['image']}}" height="100px" alt="" />
+              {{wikis[wiki]['title']}}
           </div>
         {% endfor %}
         </div>
