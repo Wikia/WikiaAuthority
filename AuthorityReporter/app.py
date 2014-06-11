@@ -241,6 +241,7 @@ def main():
                         help=u"App port")
     args = parser.parse_args()
 
+    api.register_args(args)
     app.debug = True
     app_api = restful.Api(app)
     api.register_resources(app_api)

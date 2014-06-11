@@ -2,8 +2,19 @@ import sys
 import inspect
 from flask.ext.restful import reqparse
 from flask.ext import restful
-from ..app import args as app_args
 from .. import models
+
+app_args = None
+
+
+def register_args(args):
+    """
+    Registers app args into this module
+    :param args: args the args parsed from the command line when running the app
+    :type args: argparse.Namespace
+    """
+    global app_args
+    app_args = args
 
 
 def register_resources(api):
