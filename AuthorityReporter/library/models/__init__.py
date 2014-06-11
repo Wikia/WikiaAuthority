@@ -674,13 +674,17 @@ GROUP BY wikis.wiki_id ORDER BY total_authority DESC LIMIT %d OFFSET %d;
         else:
             return [dict(wiki_id=row[0], wiki_url=row[1], total_authority=row[2]) for row in self.cursor.fetchall()]
 
-    def get_topics(self, limit=10):
+    def get_topics(self, limit=10, offset=0, for_api=False):
         """
         Gets most important topics for this user
         :param limit: limit
         :type limit: int
-        :return: ordered dict of topic name to auth
-        :rtype:class:`collections.OrderedDict`
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we fix the naming
+        :type for_api: bool
+        :return: ordered dict of topic name to auth or a list of dicts
+        :rtype: `collections.OrderedDict`|list
         """
         sql = u"""
         SELECT topics.name, SUM(au.contribs * articles.local_authority) AS topic_authority
@@ -694,8 +698,14 @@ GROUP BY wikis.wiki_id ORDER BY total_authority DESC LIMIT %d OFFSET %d;
         if limit:
             sql += u" LIMIT %d" % limit
 
+        if offset:
+            sql += u" OFFSET %d" % offset
+
         self.cursor.execute(sql)
-        return OrderedDict([(x[0], dict(name=x[0], authority=x[1])) for x in self.cursor.fetchall()])
+        if not for_api:
+            return OrderedDict([(x[0], dict(name=x[0], authority=x[1])) for x in self.cursor.fetchall()])
+        else:
+            return OrderedDict([(x[0], dict(topic=x[0], authority=x[1])) for x in self.cursor.fetchall()])
 
     def get_topics_for_wiki(self, wiki_id, limit=10):
         """

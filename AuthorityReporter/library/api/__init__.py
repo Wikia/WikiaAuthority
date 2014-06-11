@@ -501,7 +501,7 @@ class AuthorWikis(restful.Resource):
         """
         Access a JSON response for the top wikis for the given user
         :param user_name: the name of the user in question
-        :type topic: str
+        :type user_name: str
         :return: the response dict
         :rtype: dict
 
@@ -551,4 +551,65 @@ class AuthorWikis(restful.Resource):
             u'limit': request_args[u'limit'],
             u'offset': request_args[u'offset'],
             u'wikis': models.UserModel(user_name, app_args).get_wikis(**request_args)
+        }
+
+
+class AuthorTopics(restful.Resource):
+
+    urls = [u"/api/author/<string:user_name>/topics/", u"/api/author/<string:user_name>/topics"]
+
+    def get(self, user_name):
+        """
+        Access a JSON response for the top topics for the given user
+        :param user_name: the name of the user in question
+        :type user_name: str
+        :return: the response dict
+        :rtype: dict
+
+        .. http:get:: /user/(str:user_name)/wikis
+
+           Top topics for this user, sorted by total authority
+
+           **Example request**:
+
+           .. sourcecode:: http
+
+              GET /user/sactage/topics HTTP/1.1
+              Host: authority_api_server.example.com
+              Accept: application/json, text/javascript
+
+           **Example response**:
+
+           .. sourcecode:: http
+
+              HTTP/1.1 200 OK
+              Vary: Accept
+              Content-Type: text/javascript
+
+
+              {
+                  user: "sactage",
+                  limit: 10,
+                  offset: 0,
+                  topics: [
+                      topics: [
+                      {
+                        topic: "foo",
+                        authority: 1.02325,
+                      },
+                      ...
+                  ]
+              }
+
+           :query offset: offset number. default is 0
+           :query limit: limit number. default is 10
+           :resheader Content-Type: application/json
+           :statuscode 200: no error
+        """
+        request_args = get_request_parser().parse_args()
+        return {
+            u'user': user_name,
+            u'limit': request_args[u'limit'],
+            u'offset': request_args[u'offset'],
+            u'topics': models.UserModel(user_name, app_args).get_topics(**request_args).values()
         }
