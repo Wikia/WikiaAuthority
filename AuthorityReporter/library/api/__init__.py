@@ -322,5 +322,5 @@ class TopicPages(restful.Resource):
             u'topic': topic,
             u'limit': request_args[u'limit'],
             u'offset': request_args[u'offset'],
-            u'pages': models.TopicModel.get_pages(**request_args)
+            u'pages': models.TopicModel(topic, app_args).get_pages(**request_args)
         }
