@@ -739,5 +739,5 @@ class AuthorWikiTopics(restful.Resource):
             u'user': user_name,
             u'limit': request_args[u'limit'],
             u'offset': request_args[u'offset'],
-            u'topics': models.UserModel(user_name, app_args).get_topics_for_wiki(**request_args).values()
+            u'topics': models.UserModel(user_name, app_args).get_topics_for_wiki(wiki_id, **request_args).values()
         }
