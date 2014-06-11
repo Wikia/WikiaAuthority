@@ -266,7 +266,7 @@ class Wiki(restful.Resource):
 
 class TopicPages(restful.Resource):
 
-    urls = [u"/api/topic/<str:topic>/pages", u"/api/topic/<str:topic>/pages"]
+    urls = [u"/api/topic/<string:topic>/pages", u"/api/topic/<string:topic>/pages"]
 
     def get(self, topic):
         """
