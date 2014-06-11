@@ -1,15 +1,18 @@
 import argparse
 import json
-import xlwt
 import mimetypes
 import StringIO
-import api
+
+import xlwt
 from flask import Flask, render_template, Response
 from flask.ext import restful
 from werkzeug.datastructures import Headers
-from wikia_dstk.authority import add_db_arguments
 from nlp_services.caching import use_caching
-from models import TopicModel, WikiModel, PageModel, UserModel
+
+from library import api
+from wikia_dstk.authority import add_db_arguments
+from AuthorityReporter.library.models import TopicModel, WikiModel, PageModel, UserModel
+
 
 use_caching()
 

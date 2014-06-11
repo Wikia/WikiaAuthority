@@ -1,17 +1,11 @@
 from wikia_dstk.authority import get_db_and_cursor
-from nlp_services.authority import WikiAuthorityService
-from nlp_services.authority import WikiAuthorTopicAuthorityService, WikiAuthorsToIdsService
-from nlp_services.authority import WikiTopicsToAuthorityService
-from collections import defaultdict, OrderedDict
-from nlp_services.caching import use_caching
+from collections import OrderedDict
 from multiprocessing import Pool
 import requests
 import xlwt
 from collections import defaultdict
 from nlp_services.caching import use_caching
 from nlp_services.pooling import set_global_num_processes
-from nlp_services.authority import WikiAuthorityService, WikiTopicsToAuthorityService, WikiAuthorTopicAuthorityService
-from nlp_services.authority import WikiAuthorsToIdsService
 
 
 class BaseModel():
@@ -132,8 +126,9 @@ FROM topics
     FROM topics
       INNER JOIN articles_topics ON topics.name = '%s' AND topics.topic_id = articles_topics.topic_id
       INNER JOIN articles_users ON articles_topics.article_id = articles_users.article_id
-                                   AND articles_topics.wiki_id = articles_users.wiki_id
-      INNER JOIN articles ON articles.article_id = articles_users.article_id AND articles.wiki_id = articles_users.wiki_id
+                               AND articles_topics.wiki_id = articles_users.wiki_id
+      INNER JOIN articles ON articles.article_id = articles_users.article_id
+                         AND articles.wiki_id = articles_users.wiki_id
       INNER JOIN users ON articles_users.user_id = users.user_id
     GROUP BY users.user_id
     ORDER BY auth DESC
@@ -205,7 +200,7 @@ class WikiModel(BaseModel):
         """
         Get topics for this wiki
         :param limit: number of topics to get
-        :type limit: int
+        :type limit: int|None
         :param offset: offset
         :type offset: int
         :return: a list of dicts
