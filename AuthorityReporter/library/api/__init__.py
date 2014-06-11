@@ -462,7 +462,7 @@ class Topic(restful.Resource):
 
         .. http:get:: /api/topic/(str:topic)
 
-           Authority data for this wiki
+           Authority data for this topic
 
            **Example request**:
 
@@ -741,3 +741,49 @@ class AuthorWikiTopics(restful.Resource):
             u'offset': request_args[u'offset'],
             u'topics': models.UserModel(user_name, app_args).get_topics_for_wiki(wiki_id, **request_args)
         }
+
+
+class Author(restful.Resource):
+
+    urls = [u"/api/author/<string:user_name>", u"/api/author/<string:user_name>/"]
+
+    def get(self, topic):
+        """
+        Access a JSON response representing data for the author, including authority.
+        Scaled authority is for comparing authors
+        :param topic: the string value of the topic
+        :type topic: str
+        :return: the response dict
+        :rtype: dict
+
+        .. http:get:: /api/author/(str:user_name)
+
+           Authority data for this author
+
+           **Example request**:
+
+           .. sourcecode:: http
+
+              GET /author/sactage/ HTTP/1.1
+              Host: authority_api_server.example.com
+              Accept: application/json, text/javascript
+
+           **Example response**:
+
+           .. sourcecode:: http
+
+              HTTP/1.1 200 OK
+              Vary: Accept
+              Content-Type: text/javascript
+
+
+              {
+                  user_id: 123,
+                  user_name: "sactage",
+                  total_authority: 5.234825
+              }
+
+           :resheader Content-Type: application/json
+           :statuscode 200: no error
+        """
+        return models.AuthorModel(user_name, app_args).get_row()

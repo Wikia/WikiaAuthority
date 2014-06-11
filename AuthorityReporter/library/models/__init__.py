@@ -753,6 +753,16 @@ GROUP BY wikis.wiki_id ORDER BY total_authority DESC LIMIT %d OFFSET %d;
         else:
             return [dict(topic=x[0], authority=x[1]) for x in self.cursor.fetchall()]
 
+    def get_row(self):
+        """
+        Returns the row from the DB as a dict
+        :return: row data
+        :rtype: dict
+        """
+        self.cursor.execute(u'SELECT * FROM users WHERE user_name = "%s"' % self.db.escape_string(self.user_name))
+        row = self.cursor.fetchone()
+        return dict(user_id=row[0], user_name=row[1], total_authority=row[2])
+
 
 class MinMaxScaler:
     """
