@@ -50,6 +50,10 @@ class TopicModel(BaseModel):
         Gets most authoritative pages for a topic using Authority DB and Wikia API data
         :param limit: Number of results we want
         :type limit: int
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we add less
+        :type for_api: bool
         :return: a list of objects reflecting page results
         :rtype: list
         """
@@ -90,23 +94,37 @@ class TopicModel(BaseModel):
 
         return ordered_page_results
 
-    def get_wikis(self, limit=10):
+    def get_wikis(self, limit=10, offset=0, for_api=False):
         """
         Gets wikis for the current topic
         :param limit: the number of wikis we want
         :type limit: int
-        :return: a dict with keys for wikis (objects) and wiki ids (ints) for ordering
-        :rtype: dict
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we add less
+        :type for_api: bool
+        :return: a dict with keys for wikis (objects) and wiki ids (ints) for ordering or an ordered list of dicts
+        :rtype: dict|list
         """
-        self.cursor.execute(u"""
-SELECT wikis.wiki_id, SUM(articles.global_authority) AS total_auth
+
+        sql = u"""
+SELECT wikis.wiki_id, SUM(articles.global_authority) AS total_auth, wikis.url
 FROM topics
   INNER JOIN articles_topics ON topics.name = '%s' AND topics.topic_id = articles_topics.topic_id
   INNER JOIN articles ON articles.article_id = articles_topics.article_id AND articles.wiki_id = articles_topics.wiki_id
   INNER JOIN wikis ON articles.wiki_id = wikis.wiki_id
   GROUP BY articles.wiki_id ORDER BY total_auth DESC LIMIT %d
     -- selects the best wikis for a given topic
-                        """ % (self.db.escape_string(self.topic), limit))
+                        """ % (self.db.escape_string(self.topic), limit)
+
+        if offset:
+            sql += u" OFFSET %d" % offset
+
+        self.cursor.execute(sql)
+
+        if for_api:
+            return [dict(wiki_id=row[0], total_topic_authority=row[1], wiki_url=row[2])
+                    for row in self.cursor.fetchall()]
 
         wids_to_auth = OrderedDict([(row[0], row[1]) for row in self.cursor.fetchall()])
         wiki_ids = map(str, wids_to_auth.keys())

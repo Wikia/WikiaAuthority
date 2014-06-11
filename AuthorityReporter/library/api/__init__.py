@@ -306,7 +306,7 @@ class TopicPages(restful.Resource):
                         wiki_url: 'http://batman.wikia.com/',
                         wiki_id: 1234,
                         article_id: 2345,
-                        authoirty: 2.245642
+                        authority: 2.245642
                       },
                       ...
                   ]
@@ -323,4 +323,65 @@ class TopicPages(restful.Resource):
             u'limit': request_args[u'limit'],
             u'offset': request_args[u'offset'],
             u'pages': models.TopicModel(topic, app_args).get_pages(**request_args)
+        }
+
+
+class TopicWikis(restful.Resource):
+
+    urls = [u"/api/topic/<string:topic>/wikis", u"/api/topic/<string:topic>/wikis"]
+
+    def get(self, topic):
+        """
+        Access a JSON response for the top wikis for the given topic
+        :param topic: the topic in question
+        :type topic: str
+        :return: the response dict
+        :rtype: dict
+
+        .. http:get:: /topic/(str:topic)/wikis
+
+           Top wikis for this topic, sorted by total topic authority
+
+           **Example request**:
+
+           .. sourcecode:: http
+
+              GET /topic/batman/wikis HTTP/1.1
+              Host: authority_api_server.example.com
+              Accept: application/json, text/javascript
+
+           **Example response**:
+
+           .. sourcecode:: http
+
+              HTTP/1.1 200 OK
+              Vary: Accept
+              Content-Type: text/javascript
+
+
+              {
+                  topic: "batman",
+                  limit: 10,
+                  offset: 0,
+                  wikis: [
+                      {
+                        wiki_url: 'http://batman.wikia.com/',
+                        wiki_id: 1234,
+                        total_topic_authority: 2.245642
+                      },
+                      ...
+                  ]
+              }
+
+           :query offset: offset number. default is 0
+           :query limit: limit number. default is 10
+           :resheader Content-Type: application/json
+           :statuscode 200: no error
+        """
+        request_args = get_request_parser().parse_args()
+        return {
+            u'topic': topic,
+            u'limit': request_args[u'limit'],
+            u'offset': request_args[u'offset'],
+            u'wikis': models.TopicModel(topic, app_args).get_wikis(**request_args)
         }
