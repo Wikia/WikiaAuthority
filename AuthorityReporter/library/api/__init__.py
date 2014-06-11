@@ -266,7 +266,7 @@ class Wiki(restful.Resource):
 
 class TopicPages(restful.Resource):
 
-    urls = [u"/api/topic/<string:topic>/pages", u"/api/topic/<string:topic>/pages"]
+    urls = [u"/api/topic/<string:topic>/pages/", u"/api/topic/<string:topic>/pages"]
 
     def get(self, topic):
         """
@@ -328,7 +328,7 @@ class TopicPages(restful.Resource):
 
 class TopicWikis(restful.Resource):
 
-    urls = [u"/api/topic/<string:topic>/wikis", u"/api/topic/<string:topic>/wikis"]
+    urls = [u"/api/topic/<string:topic>/wikis/", u"/api/topic/<string:topic>/wikis"]
 
     def get(self, topic):
         """
@@ -385,3 +385,66 @@ class TopicWikis(restful.Resource):
             u'offset': request_args[u'offset'],
             u'wikis': models.TopicModel(topic, app_args).get_wikis(**request_args)
         }
+
+
+class TopicAuthors(restful.Resource):
+
+    urls = [u"/api/topic/<string:topic>/authors", u"/api/topic/<string:topic>/authors/"]
+
+    def get(self, topic):
+        """
+        Access a JSON response for the top authors for the given topic
+        :param topic: the topic in question
+        :type topic: str
+        :return: the response dict
+        :rtype: dict
+
+        .. http:get:: /topic/(str:topic)/authors
+
+           Top wikis for this topic, sorted by total topic authority
+
+           **Example request**:
+
+           .. sourcecode:: http
+
+              GET /topic/batman/authors HTTP/1.1
+              Host: authority_api_server.example.com
+              Accept: application/json, text/javascript
+
+           **Example response**:
+
+           .. sourcecode:: http
+
+              HTTP/1.1 200 OK
+              Vary: Accept
+              Content-Type: text/javascript
+
+
+              {
+                  topic: "batman",
+                  limit: 10,
+                  offset: 0,
+                  wikis: [
+                      {
+                        id: 12356
+                        user_name: "Foo_barson",
+                        total_authority: 2.245642
+                      },
+                      ...
+                  ]
+              }
+
+           :query offset: offset number. default is 0
+           :query limit: limit number. default is 10
+           :resheader Content-Type: application/json
+           :statuscode 200: no error
+        """
+        request_args = get_request_parser().parse_args()
+        return {
+            u'topic': topic,
+            u'limit': request_args[u'limit'],
+            u'offset': request_args[u'offset'],
+            u'authors': models.TopicModel(topic, app_args).get_authors(**request_args)
+        }
+
+

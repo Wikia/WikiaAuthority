@@ -138,7 +138,7 @@ FROM topics
 
         return dict(wikis=wikis, wiki_ids=wiki_ids)
 
-    def get_users(self, limit=10, with_api=True):
+    def get_users(self, limit=10, for_api=False):
         """
         Gets users for a given topic
         :param limit: the number of users we want
@@ -169,7 +169,7 @@ FROM topics
 
         user_api_data = []
 
-        if with_api:
+        if not for_api:
             for i in range(0, limit, 25):
                 response = requests.get(u'http://www.wikia.com/api/v1/User/Details',
                                         params={u'ids': u','.join([str(x[0]) for x in user_data[i:i+25]])})
@@ -181,7 +181,7 @@ FROM topics
         id_to_auth = OrderedDict([(x[0], {u'id': x[0], u'user_name': x[1], u'total_authority': x[2]})
                                   for x in user_data])
         author_objects = []
-        if with_api:
+        if not for_api:
             for obj in user_api_data:
                 obj[u'total_authority'] = id_to_auth[obj[u'user_id']][u'total_authority']
                 author_objects.append(obj)

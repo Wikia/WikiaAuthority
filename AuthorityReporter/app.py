@@ -190,7 +190,7 @@ def users_for_topic_xls(topic):
     titles = [u"Name", u"Authority"]
     keys = [u"user_name", u"total_authority"]
     map(lambda (cell, title): worksheet.write(0, cell, title), enumerate(titles))
-    users = TopicModel(topic, args).get_users(limit=1000, with_api=False)
+    users = TopicModel(topic, args).get_users(limit=1000, for_api=True)
     map(lambda (row, user): map(lambda (cell, key): worksheet.write(row+1, cell, user[key]),
                                 enumerate(keys)),
         enumerate(users))
