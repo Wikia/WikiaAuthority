@@ -191,11 +191,13 @@ class WikiModel(BaseModel):
                                           params=dict(ids=self.wiki_id)).json()[u'items'][self.wiki_id]
         return self._api_data
 
-    def get_topics(self, limit=10):
+    def get_topics(self, limit=10, offset=None):
         """
         Get topics for this wiki
         :param limit: number of topics to get
         :type limit: int
+        :param offset: offset
+        :type offset: int
         :return: a list of dicts
         :rtype: list
         """
@@ -210,6 +212,9 @@ class WikiModel(BaseModel):
 
         if limit:
             sql += u" LIMIT %d" % limit
+
+        if offset:
+            sql += u" OFFSET %d" % offset
 
         self.cursor.execute(sql)
 
@@ -235,11 +240,15 @@ class WikiModel(BaseModel):
 
         return OrderedDict([(x[0], dict(id=x[0], name=x[1], total_authority=x[2])) for x in self.cursor.fetchall()])
 
-    def get_authors(self, limit=10):
+    def get_authors(self, limit=10, offset=None, for_api=False):
         """
         Provides the top authors for a wiki
         :param limit: number of authors you want
         :type limit: int
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we add less
+        :type for_api: bool
         :return: list of author dicts
         :rtype: list
         """
@@ -255,12 +264,15 @@ class WikiModel(BaseModel):
         if limit:
             sql += u" LIMIT %d" % limit
 
+        if offset:
+            sql += u" OFFSET %d" % offset
+
         self.cursor.execute(sql)
 
         authors_dict = OrderedDict([(x[0], dict(id=x[0], name=x[1], total_authority=x[2]))
                                     for x in self.cursor.fetchall()])
 
-        if limit:
+        if limit and not for_api:
             user_api_data = requests.get(self.api_data[u'url']+u'/api/v1/User/Details',
                                          params={u'ids': u",".join(map(str, authors_dict.keys())),
                                                  u'format': u'json'}).json()[u'items']
@@ -270,18 +282,31 @@ class WikiModel(BaseModel):
 
         return authors_dict.values()
 
-    def get_pages(self, limit=10):
+    def get_pages(self, limit=10, offset=None, for_api=False):
         """
         Gets most authoritative pages for this wiki
         :param limit: the number of pages you want
         :type limit: int
-        :return: a list of page objects
-        :rtype: list
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we add less
+        :type for_api: bool
+        :return: a list of page objects if not for api, otherwise an ordereddict
+        :rtype: list|OrderedDict
         """
-        self.cursor.execute(u"""SELECT article_id, local_authority FROM articles
-                           WHERE wiki_id = %s ORDER BY local_authority DESC LIMIT %d""" % (self.wiki_id, limit))
-        id_to_authority = [(row[0], row[1]) for row in self.cursor.fetchall()]
 
+        sql = u"""SELECT article_id, local_authority FROM articles
+                   WHERE wiki_id = %s ORDER BY local_authority DESC LIMIT %d""" % (self.wiki_id, limit)
+
+        if offset:
+            sql += u" OFFSET %d" % offset
+
+        self.cursor.execute(sql)
+
+        if for_api:
+            return [dict(id=row[0], authority=row[1]) for row in self.cursor.fetchall()]
+
+        id_to_authority = [(row[0], row[1]) for row in self.cursor.fetchall()]
         response = requests.get(self.api_data[u'url']+u'api/v1/Articles/Details',
                                 params=dict(ids=u','.join([str(a[0]) for a in id_to_authority])))
 
