@@ -196,13 +196,15 @@ class WikiModel(BaseModel):
         row = self.cursor.fetchone()
         return dict(wiki_id=row[0], wam_score=row[1], title=row[2], url=row[3], authority=row[4])
 
-    def get_topics(self, limit=10, offset=None):
+    def get_topics(self, limit=10, offset=None, for_api=False):
         """
         Get topics for this wiki
         :param limit: number of topics to get
         :type limit: int|None
         :param offset: offset
         :type offset: int
+        :param for_api: if it's for the api, we add less
+        :type for_api: bool
         :return: a list of dicts
         :rtype: list
         """
@@ -224,7 +226,7 @@ class WikiModel(BaseModel):
         self.cursor.execute(sql)
 
         results = [dict(topic=x[0], authority=x[1]) for x in self.cursor.fetchall()]
-        if limit:
+        if limit and not for_api:
             for result in results:
                 result[u'authors'] = TopicModel(result[u'topic'], self.args).get_users(limit=5)
 

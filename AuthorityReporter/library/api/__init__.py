@@ -72,10 +72,6 @@ class WikiTopics(restful.Resource):
                       {
                         topic: "foo",
                         authority: 1.02325,
-                        authors: [
-                            {id: 123, user_name: "foobar", total_authority: 0.047},
-                             ...
-                        ]
                       },
                       ...
                   ]
