@@ -747,7 +747,7 @@ class Author(restful.Resource):
 
     urls = [u"/api/author/<string:user_name>", u"/api/author/<string:user_name>/"]
 
-    def get(self, topic):
+    def get(self, user_name):
         """
         Access a JSON response representing data for the author, including authority.
         Scaled authority is for comparing authors
