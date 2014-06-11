@@ -599,6 +599,18 @@ class PageModel(BaseModel):
         else:
             return [{u'topic': row[1], u'total_authority': row[2]} for row in self.cursor.fetchall()]
 
+    def get_row(self):
+        """
+        Returns the row from the DB as a dict
+        :return: row data
+        :rtype: dict
+        """
+        self.cursor.execute(u'SELECT * FROM articles WHERE doc_id = "%d_%d"' % (self.wiki_id, self.page_id))
+        row = self.cursor.fetchone()
+        return dict(zip([u'doc_id', u'article_id', u'wiki_id', u'pageviews',
+                         u'local_authority', u'local_authority_pv', u'global_authority'],
+                    row))
+
 
 class UserModel(BaseModel):
     """

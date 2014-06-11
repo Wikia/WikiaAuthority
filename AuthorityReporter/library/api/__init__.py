@@ -56,7 +56,7 @@ class WikiTopics(restful.Resource):
 
            .. sourcecode:: http
 
-              GET /wiki/123/topics HTTP/1.1
+              GET /api/wiki/123/topics HTTP/1.1
               Host: authority_api_server.example.com
               Accept: application/json, text/javascript
 
@@ -116,7 +116,7 @@ class WikiAuthors(restful.Resource):
 
            .. sourcecode:: http
 
-              GET /wiki/123/authors HTTP/1.1
+              GET /api/wiki/123/authors HTTP/1.1
               Host: authority_api_server.example.com
               Accept: application/json, text/javascript
 
@@ -177,7 +177,7 @@ class WikiPages(restful.Resource):
 
            .. sourcecode:: http
 
-              GET /wiki/123/pages HTTP/1.1
+              GET /api/wiki/123/pages HTTP/1.1
               Host: authority_api_server.example.com
               Accept: application/json, text/javascript
 
@@ -237,7 +237,7 @@ class Wiki(restful.Resource):
 
            .. sourcecode:: http
 
-              GET /wiki/123/ HTTP/1.1
+              GET /api/wiki/123/ HTTP/1.1
               Host: authority_api_server.example.com
               Accept: application/json, text/javascript
 
@@ -284,7 +284,7 @@ class TopicPages(restful.Resource):
 
            .. sourcecode:: http
 
-              GET /topic/batman/pages HTTP/1.1
+              GET /api/topic/batman/pages HTTP/1.1
               Host: authority_api_server.example.com
               Accept: application/json, text/javascript
 
@@ -346,7 +346,7 @@ class TopicWikis(restful.Resource):
 
            .. sourcecode:: http
 
-              GET /topic/batman/wikis HTTP/1.1
+              GET /api/topic/batman/wikis HTTP/1.1
               Host: authority_api_server.example.com
               Accept: application/json, text/javascript
 
@@ -407,7 +407,7 @@ class TopicAuthors(restful.Resource):
 
            .. sourcecode:: http
 
-              GET /topic/batman/authors HTTP/1.1
+              GET /api/topic/batman/authors HTTP/1.1
               Host: authority_api_server.example.com
               Accept: application/json, text/javascript
 
@@ -468,7 +468,7 @@ class Topic(restful.Resource):
 
            .. sourcecode:: http
 
-              GET /topic/batman/ HTTP/1.1
+              GET /api/topic/batman/ HTTP/1.1
               Host: authority_api_server.example.com
               Accept: application/json, text/javascript
 
@@ -513,7 +513,7 @@ class AuthorWikis(restful.Resource):
 
            .. sourcecode:: http
 
-              GET /user/sactage/wikis HTTP/1.1
+              GET /api/user/sactage/wikis HTTP/1.1
               Host: authority_api_server.example.com
               Accept: application/json, text/javascript
 
@@ -574,7 +574,7 @@ class AuthorTopics(restful.Resource):
 
            .. sourcecode:: http
 
-              GET /user/sactage/topics HTTP/1.1
+              GET /api/user/sactage/topics HTTP/1.1
               Host: authority_api_server.example.com
               Accept: application/json, text/javascript
 
@@ -634,7 +634,7 @@ class AuthorPages(restful.Resource):
 
            .. sourcecode:: http
 
-              GET /user/sactage/pages HTTP/1.1
+              GET /api/user/sactage/pages HTTP/1.1
               Host: authority_api_server.example.com
               Accept: application/json, text/javascript
 
@@ -703,7 +703,7 @@ class AuthorWikiTopics(restful.Resource):
 
            .. sourcecode:: http
 
-              GET /user/sactage/topics/wiki/3125 HTTP/1.1
+              GET /api/user/sactage/topics/wiki/3125 HTTP/1.1
               Host: authority_api_server.example.com
               Accept: application/json, text/javascript
 
@@ -764,7 +764,7 @@ class Author(restful.Resource):
 
            .. sourcecode:: http
 
-              GET /author/sactage/ HTTP/1.1
+              GET /api/author/sactage/ HTTP/1.1
               Host: authority_api_server.example.com
               Accept: application/json, text/javascript
 
@@ -812,7 +812,7 @@ class PageAuthors(restful.Resource):
 
            .. sourcecode:: http
 
-              GET /wiki/123/article/321/authors HTTP/1.1
+              GET /api/wiki/123/article/321/authors HTTP/1.1
               Host: authority_api_server.example.com
               Accept: application/json, text/javascript
 
@@ -878,7 +878,7 @@ class PageTopics(restful.Resource):
 
            .. sourcecode:: http
 
-              GET /wiki/123/article/321/topics HTTP/1.1
+              GET /api/wiki/123/article/321/topics HTTP/1.1
               Host: authority_api_server.example.com
               Accept: application/json, text/javascript
 
@@ -921,4 +921,52 @@ class PageTopics(restful.Resource):
 
 
 class Page(restful.Resource):
-    pass
+
+    urls = [u"/api/wiki/<int:wiki_id>/article/<int:article_id>",
+            u"/api/wiki/<int:wiki_id>/article/<int:article_id>/"]
+
+    def get(self, wiki_id, article_id):
+        """
+        Access a JSON response representing the page, including authority
+        :param wiki_id: the ID of the wiki
+        :type wiki_id: int
+        :param article_id: the id of the article
+        :type article_id: int
+        :return: the response dict
+        :rtype: dict
+
+        .. http:get:: /api/wiki/(int:wiki_id)/article/(int:wiki_id)
+
+           Authority data for this author
+
+           **Example request**:
+
+           .. sourcecode:: http
+
+              GET /api/wiki/831/article/50 HTTP/1.1
+              Host: authority_api_server.example.com
+              Accept: application/json, text/javascript
+
+           **Example response**:
+
+           .. sourcecode:: http
+
+              HTTP/1.1 200 OK
+              Vary: Accept
+              Content-Type: text/javascript
+
+
+              {
+                  doc_id: "831_50",
+                  article_id: 50,
+                  wiki_id: 831,
+                  pageviews: 1235,
+                  local_authority: 1.1231356,
+                  local_authority_pv: 1.1235161,
+                  global_authority: 2.234125
+              }
+
+           :resheader Content-Type: application/json
+           :statuscode 200: no error
+        """
+        return models.PageModel(wiki_id, article_id, app_args).get_row()
