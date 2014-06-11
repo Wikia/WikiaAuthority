@@ -199,6 +199,16 @@ FROM topics
 
         return author_objects
 
+    def get_row(self):
+        """
+        Gets the database for this topic
+        :rtype: dict
+        :return: a dict representing the row and its column titles
+        """
+        self.cursor.execute(u'SELECT * FROM topics WHERE name = "%s"' % self.db.escape_string(self.topic))
+        row = self.cursor.fetchone()
+        return dict(topic_id=row[0], topic=row[1], total_authority=row[2])
+
 
 class WikiModel(BaseModel):
     """

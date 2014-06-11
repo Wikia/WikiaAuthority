@@ -448,3 +448,46 @@ class TopicAuthors(restful.Resource):
         }
 
 
+class Topic(restful.Resource):
+
+    urls = [u"/api/topic/<string:topic>", u"/api/topic/<string:topic>/"]
+
+    def get(self, topic):
+        """
+        Access a JSON response representing data for the topic, including authority
+        :param topic: the string value of the topic
+        :type topic: str
+        :return: the response dict
+        :rtype: dict
+
+        .. http:get:: /topic/(str:topic)
+
+           Authority data for this wiki
+
+           **Example request**:
+
+           .. sourcecode:: http
+
+              GET /topic/batman/ HTTP/1.1
+              Host: authority_api_server.example.com
+              Accept: application/json, text/javascript
+
+           **Example response**:
+
+           .. sourcecode:: http
+
+              HTTP/1.1 200 OK
+              Vary: Accept
+              Content-Type: text/javascript
+
+
+              {
+                  topic_id: 123,
+                  topic: "batman",
+                  total_authority: 5.234825
+              }
+
+           :resheader Content-Type: application/json
+           :statuscode 200: no error
+        """
+        return models.TopicModel(topic, app_args).get_row()
