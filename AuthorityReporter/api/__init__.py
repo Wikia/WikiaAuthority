@@ -2,7 +2,7 @@ import sys
 import inspect
 from flask.ext.restful import reqparse
 from flask.ext import restful
-from .. import models
+from . import models
 
 app_args = None
 
