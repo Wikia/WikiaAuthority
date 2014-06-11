@@ -37,7 +37,7 @@ def get_request_parser():
 
 class WikiTopics(restful.Resource):
 
-    urls = [u"/wiki/<int:wiki_id>/topics", u"/wiki/<int:wiki_id>/topics/"]
+    urls = [u"/api/wiki/<int:wiki_id>/topics", u"/api/wiki/<int:wiki_id>/topics/"]
 
     def get(self, wiki_id):
         """
@@ -97,7 +97,7 @@ class WikiTopics(restful.Resource):
 
 class WikiAuthors(restful.Resource):
 
-    urls = [u"/wiki/<int:wiki_id>/authors", u"/wiki/<int:wiki_id>/authors/"]
+    urls = [u"/api/wiki/<int:wiki_id>/authors", u"/api/wiki/<int:wiki_id>/authors/"]
 
     def get(self, wiki_id):
         """
@@ -154,7 +154,7 @@ class WikiAuthors(restful.Resource):
 
 class WikiPages(restful.Resource):
 
-    urls = [u"/wiki/<int:wiki_id>/pages", u"/wiki/<int:wiki_id>/pages/"]
+    urls = [u"/api/wiki/<int:wiki_id>/pages", u"/api/wiki/<int:wiki_id>/pages/"]
 
     def get(self, wiki_id):
         """
@@ -210,7 +210,7 @@ class WikiPages(restful.Resource):
 
 class Wiki(restful.Resource):
 
-    urls = [u"/wiki/<int:wiki_id>", u"/wiki/<int:wiki_id>/"]
+    urls = [u"/api/wiki/<int:wiki_id>", u"/api/wiki/<int:wiki_id>/"]
 
     def get(self, wiki_id):
         """
