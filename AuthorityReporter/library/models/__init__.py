@@ -138,17 +138,20 @@ FROM topics
 
         return dict(wikis=wikis, wiki_ids=wiki_ids)
 
-    def get_users(self, limit=10, for_api=False):
+    def get_users(self, limit=10, offset=0, for_api=False):
         """
         Gets users for a given topic
         :param limit: the number of users we want
         :type limit: int
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we add less
+        :type for_api: bool
         :return: a list of objects related to authors
         :rtype: list
         """
 
-        try:
-            self.cursor.execute(u"""
+        sql = u"""
     SELECT users.user_id, users.user_name, SUM(articles_users.contribs * articles.global_authority) AS auth
     FROM topics
       INNER JOIN articles_topics ON topics.name = '%s' AND topics.topic_id = articles_topics.topic_id
@@ -161,7 +164,13 @@ FROM topics
     ORDER BY auth DESC
     LIMIT %d
     -- selects the most influential authors for a given topic
-        """ % (self.db.escape_string(self.topic), limit))
+        """ % (self.db.escape_string(self.topic), limit)
+
+        if offset:
+            sql += u" OFFSET %d" % offset
+
+        try:
+            self.cursor.execute(sql)
         except UnicodeEncodeError:
             return []
 
