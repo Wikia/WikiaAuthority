@@ -1,9 +1,20 @@
-import json
+import sys
+import inspect
 from flask.ext.restful import reqparse
-from flask import request
 from flask.ext import restful
 from ..app import args as app_args
 from .. import models
+
+
+def register_resources(api):
+    """
+    Dynamically registers all restful resources in this module with the API
+    :param api: the restful API object paired to the flask app
+    :type api: restful.Api
+    """
+    for name, obj in inspect.getmembers(sys.modules[__name__]):
+        if inspect.isclass(obj):
+            api.add_resource(obj, *obj.urls)
 
 
 def get_request_parser():
@@ -14,6 +25,8 @@ def get_request_parser():
 
 
 class WikiTopics(restful.Resource):
+
+    urls = [u"/wiki/<int:wiki_id>/topics", u"/wiki/<int:wiki_id>/topics/"]
 
     def get(self, wiki_id):
         """
@@ -73,6 +86,8 @@ class WikiTopics(restful.Resource):
 
 class WikiAuthors(restful.Resource):
 
+    urls = [u"/wiki/<int:wiki_id>/authors", u"/wiki/<int:wiki_id>/authors/"]
+
     def get(self, wiki_id):
         """
         Access a JSON response for the top authors for the given wiki
@@ -128,6 +143,8 @@ class WikiAuthors(restful.Resource):
 
 class WikiPages(restful.Resource):
 
+    urls = [u"/wiki/<int:wiki_id>/pages", u"/wiki/<int:wiki_id>/pages/"]
+
     def get(self, wiki_id):
         """
         Access a JSON response for the top pages for the given wiki
@@ -182,11 +199,13 @@ class WikiPages(restful.Resource):
 
 class Wiki(restful.Resource):
 
+    urls = [u"/wiki/<int:wiki_id>", u"/wiki/<int:wiki_id>/"]
+
     def get(self, wiki_id):
         """
         Access a JSON response representing data for the wiki, including authority
 
-        .. http:get:: /wiki/(int:wiki_id)/
+        .. http:get:: /wiki/(int:wiki_id)
 
            Authority data for this wiki
 

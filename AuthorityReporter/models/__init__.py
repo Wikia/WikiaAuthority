@@ -201,7 +201,6 @@ class WikiModel(BaseModel):
         row = self.cursor.fetchone()
         return dict(wiki_id=row[0], wam_score=row[1], title=row[2], url=row[3], authority=row[4])
 
-
     def get_topics(self, limit=10, offset=None):
         """
         Get topics for this wiki
