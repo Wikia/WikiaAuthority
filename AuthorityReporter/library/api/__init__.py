@@ -32,6 +32,7 @@ def get_request_parser():
     parser = reqparse.RequestParser()
     parser.add_argument(u'limit', type=int, help=u'Limit', default=10)
     parser.add_argument(u'offset', type=int, help=u'Offset', default=0)
+    parser.add_argument(u'for_api', type=bool, help=u"For Api: don't touch for now!", default=True)
     return parser
 
 
@@ -144,7 +145,7 @@ class WikiAuthors(restful.Resource):
             u'wiki_id': wiki_id,
             u'offset': request_args[u'offset'],
             u'limit': request_args[u'limit'],
-            u'authors': models.WikiModel(wiki_id, app_args).get_topics(for_api=True, **request_args)
+            u'authors': models.WikiModel(wiki_id, app_args).get_topics(**request_args)
         }
 
 
@@ -200,7 +201,7 @@ class WikiPages(restful.Resource):
             u"wiki_id": wiki_id,
             u'offset': request_args[u'offset'],
             u'limit': request_args[u'limit'],
-            u'pages': models.WikiModel(wiki_id, app_args).get_pages(for_api=True, **request_args)
+            u'pages': models.WikiModel(wiki_id, app_args).get_pages(**request_args)
         }
 
 
