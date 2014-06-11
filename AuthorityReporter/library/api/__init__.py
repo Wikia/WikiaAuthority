@@ -672,5 +672,5 @@ class AuthorPages(restful.Resource):
             u'user': user_name,
             u'limit': request_args[u'limit'],
             u'offset': request_args[u'offset'],
-            u'pages': models.UserModel(user_name, app_args).get_pages(**request_args).values()
+            u'pages': models.UserModel(user_name, app_args).get_pages(**request_args)
         }
