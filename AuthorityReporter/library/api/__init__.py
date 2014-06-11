@@ -786,4 +786,4 @@ class Author(restful.Resource):
            :resheader Content-Type: application/json
            :statuscode 200: no error
         """
-        return models.AuthorModel(user_name, app_args).get_row()
+        return models.UserModel(user_name, app_args).get_row()
