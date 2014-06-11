@@ -43,6 +43,10 @@ class WikiTopics(restful.Resource):
     def get(self, wiki_id):
         """
         Access a JSON response for the top topics for the given wiki
+        :param wiki_id: the ID of the wiki
+        :type wiki_id: int
+        :return: the response dict
+        :rtype: dict
 
         .. http:get:: /wiki/(int:wiki_id)/topics
 
@@ -99,6 +103,10 @@ class WikiAuthors(restful.Resource):
     def get(self, wiki_id):
         """
         Access a JSON response for the top authors for the given wiki
+        :param wiki_id: the ID of the wiki
+        :type wiki_id: int
+        :return: the response dict
+        :rtype: dict
 
         .. http:get:: /wiki/(int:wiki_id)/authors
 
@@ -156,6 +164,10 @@ class WikiPages(restful.Resource):
     def get(self, wiki_id):
         """
         Access a JSON response for the top pages for the given wiki
+        :param wiki_id: the ID of the wiki
+        :type wiki_id: int
+        :return: the response dict
+        :rtype: dict
 
         .. http:get:: /wiki/(int:wiki_id)/pages
 
@@ -212,6 +224,10 @@ class Wiki(restful.Resource):
     def get(self, wiki_id):
         """
         Access a JSON response representing data for the wiki, including authority
+        :param wiki_id: the ID of the wiki
+        :type wiki_id: int
+        :return: the response dict
+        :rtype: dict
 
         .. http:get:: /wiki/(int:wiki_id)
 
@@ -246,3 +262,65 @@ class Wiki(restful.Resource):
            :statuscode 200: no error
         """
         return models.WikiModel(wiki_id, app_args).get_row()
+
+
+class TopicPages(restful.Resource):
+
+    urls = [u"/api/topic/<str:topic>/pages", u"/api/topic/<str:topic>/pages"]
+
+    def get(self, topic):
+        """
+        Access a JSON response for the top pages for the given topic
+        :param topic: the topic in question
+        :type topic: str
+        :return: the response dict
+        :rtype: dict
+
+        .. http:get:: /topic/(str:topic)/pages
+
+           Top pages for this topic, sorted by global authority
+
+           **Example request**:
+
+           .. sourcecode:: http
+
+              GET /topic/batman/pages HTTP/1.1
+              Host: authority_api_server.example.com
+              Accept: application/json, text/javascript
+
+           **Example response**:
+
+           .. sourcecode:: http
+
+              HTTP/1.1 200 OK
+              Vary: Accept
+              Content-Type: text/javascript
+
+
+              {
+                  topic: "batman",
+                  limit: 10,
+                  offset: 0,
+                  pages: [
+                      {
+                        wiki_url: 'http://batman.wikia.com/',
+                        wiki_id: 1234,
+                        article_id: 2345,
+                        authoirty: 2.245642
+                      },
+                      ...
+                  ]
+              }
+
+           :query offset: offset number. default is 0
+           :query limit: limit number. default is 10
+           :resheader Content-Type: application/json
+           :statuscode 200: no error
+        """
+        request_args = get_request_parser().parse_args()
+        return {
+            u'topic': topic,
+            u'limit': request_args[u'limit'],
+            u'offset': request_args[u'offset'],
+            u'pages': models.TopicModel.get_pages(**request_args)
+        }

@@ -45,7 +45,7 @@ class TopicModel(BaseModel):
         self.topic = topic
         BaseModel.__init__(self, args)
 
-    def get_pages(self, limit=10):
+    def get_pages(self, limit=10, offset=None, for_api=False):
         """
         Gets most authoritative pages for a topic using Authority DB and Wikia API data
         :param limit: Number of results we want
@@ -54,7 +54,7 @@ class TopicModel(BaseModel):
         :rtype: list
         """
 
-        self.cursor.execute(u"""
+        sql = u"""
     SELECT wikis.url, wikis.title, wikis.wiki_id, articles.article_id, articles.global_authority  AS auth
     FROM topics INNER JOIN articles_topics ON topics.name = '%s' AND topics.topic_id = articles_topics.topic_id
     INNER JOIN articles ON articles.article_id = articles_topics.article_id
@@ -62,22 +62,31 @@ class TopicModel(BaseModel):
     INNER JOIN wikis ON wikis.wiki_id = articles.wiki_id
     ORDER BY auth DESC
     LIMIT %d
-    """ % (self.db.escape_string(self.topic), limit))
+    """ % (self.db.escape_string(self.topic), limit)
+
+        if offset:
+            sql += u" OFFSET %d" % offset
+
+        self.cursor.execute(sql)
         ordered_db_results = [(y[0], y[1], unicode(y[2]), unicode(y[3]), y[4]) for y in self.cursor.fetchall()]
         url_to_ids = defaultdict(list)
         map(lambda x: url_to_ids[x[0]].append(x[3]), ordered_db_results)
 
-        url_to_articles = dict(Pool(processes=8).map_async(get_page_response, list(url_to_ids.items())).get())
+        if not for_api:
+            url_to_articles = dict(Pool(processes=8).map_async(get_page_response, list(url_to_ids.items())).get())
 
-        ordered_page_results = []
-        for url, wiki_name, wiki_id, page_id, authority in ordered_db_results:
-            result = dict(base_url=url, **url_to_articles[url].get(unicode(page_id), {}))
-            result[u'full_url'] = (result.get(u'base_url', '').strip(u'/') + result.get(u'url', ''))
-            result[u'wiki'] = wiki_name
-            result[u'authority'] = authority
-            result[u'wiki_id'] = wiki_id
-            result[u'page_id'] = page_id
-            ordered_page_results.append(result)
+            ordered_page_results = []
+            for url, wiki_name, wiki_id, page_id, authority in ordered_db_results:
+                result = dict(base_url=url, **url_to_articles[url].get(unicode(page_id), {}))
+                result[u'full_url'] = (result.get(u'base_url', '').strip(u'/') + result.get(u'url', ''))
+                result[u'wiki'] = wiki_name
+                result[u'authority'] = authority
+                result[u'wiki_id'] = wiki_id
+                result[u'page_id'] = page_id
+                ordered_page_results.append(result)
+        else:
+            ordered_page_results = [dict(wiki_url=row[0], wiki_id=row[2], article_id=row[3], authority=row[4])
+                                    for row in ordered_db_results]
 
         return ordered_page_results
 
