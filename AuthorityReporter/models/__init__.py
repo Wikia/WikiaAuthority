@@ -191,6 +191,17 @@ class WikiModel(BaseModel):
                                           params=dict(ids=self.wiki_id)).json()[u'items'][self.wiki_id]
         return self._api_data
 
+    def get_row(self):
+        """
+        Gets the database for this wiki
+        :rtype: dict
+        :return: a dict representing the row and its column titles
+        """
+        self.cursor.execute(u"SELECT * FROM wikis WHERE wiki_id = %d" % self.wiki_id)
+        row = self.cursor.fetchone()
+        return dict(wiki_id=row[0], wam_score=row[1], title=row[2], url=row[3], authority=row[4])
+
+
     def get_topics(self, limit=10, offset=None):
         """
         Get topics for this wiki

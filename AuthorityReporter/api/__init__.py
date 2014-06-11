@@ -178,3 +178,44 @@ class WikiPages(restful.Resource):
             u'limit': request_args[u'limit'],
             u'pages': models.WikiModel(wiki_id, app_args).get_pages(for_api=True, **request_args)
         }
+
+
+class Wiki(restful.Resource):
+
+    def get(self, wiki_id):
+        """
+        Access a JSON response representing data for the wiki, including authority
+
+        .. http:get:: /wiki/(int:wiki_id)/
+
+           Authority data for this wiki
+
+           **Example request**:
+
+           .. sourcecode:: http
+
+              GET /wiki/123/ HTTP/1.1
+              Host: authority_api_server.example.com
+              Accept: application/json, text/javascript
+
+           **Example response**:
+
+           .. sourcecode:: http
+
+              HTTP/1.1 200 OK
+              Vary: Accept
+              Content-Type: text/javascript
+
+
+              {
+                  wiki_id: 123,
+                  wam_score: 82.2345,
+                  title: "foo bar wiki",
+                  url: "http://foobar.wikia.com/",
+                  authority: 5.234825
+              }
+
+           :resheader Content-Type: application/json
+           :statuscode 200: no error
+        """
+        return models.WikiModel(wiki_id, app_args).get_row()
