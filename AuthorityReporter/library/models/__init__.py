@@ -546,45 +546,58 @@ class PageModel(BaseModel):
                                           params=dict(ids=self.page_id)).json()[u'items'][self.page_id]
         return self._api_data
 
-    def get_users(self, limit=10):
+    def get_users(self, limit=10, offset=0, for_api=False):
         """
         Get the most authoritative users for this page
         :param limit: the number of users you want
         :type limit: int
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we add less
+        :type for_api: bool
         :return: a list of of user dicts in order of authority
         :rtype: list
         """
 
         self.cursor.execute(u"""SELECT users.user_id, users.user_name, contribs FROM articles_users
                        INNER JOIN users ON wiki_id = %s AND article_id = %s AND users.user_id = articles_users.user_id
-                       ORDER BY contribs desc LIMIT %d""" % (self.wiki_id, self.page_id, limit))
+                       ORDER BY contribs desc LIMIT %d OFFSET %d""" % (self.wiki_id, self.page_id, limit, offset))
 
         users_dict = OrderedDict([(a[0], {u'id': a[0], u'name': a[1], u'contribs': a[2]})
                                   for a in self.cursor.fetchall()])
 
-        user_api_data = requests.get(self.wiki.api_data[u'url']+u'/api/v1/User/Details',
-                                     params={u'ids': u','.join(map(lambda x: str(x), users_dict.keys())),
-                                             u'format': u'json'}).json()[u'items']
+        if not for_api:
+            user_api_data = requests.get(self.wiki.api_data[u'url']+u'/api/v1/User/Details',
+                                         params={u'ids': u','.join(map(lambda x: str(x), users_dict.keys())),
+                                                 u'format': u'json'}).json()[u'items']
 
-        map(lambda x: users_dict[x[u'user_id']].update(x), user_api_data)
+            map(lambda x: users_dict[x[u'user_id']].update(x), user_api_data)
 
         return users_dict.values()
 
-    def get_topics(self, limit=10):
+    def get_topics(self, limit=10, offset=0, for_api=False):
         """
         Get the topics for the current page
         :param limit: how much you want fool
         :type limit: int
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we add less
+        :type for_api: bool
         :return: a list of dicts
         :rtype: list
         """
 
-        self.cursor.execute(u"""SELECT topics.topic_id, topics.name
+        self.cursor.execute(u"""SELECT topics.topic_id, topics.name, topics.total_authority
                        FROM topics INNER JOIN articles_topics ON wiki_id = %s AND article_id = %s
                                               AND topics.topic_id = articles_topics.topic_id
-                       ORDER BY topics.total_authority DESC LIMIT %d""" % (self.wiki_id, self.page_id, limit))
+                       ORDER BY topics.total_authority DESC LIMIT %d OFFSET %d"""
+                            % (self.wiki_id, self.page_id, limit, offset))
 
-        return [{u'id': row[0], u'name': row[1]} for row in self.cursor.fetchall()]
+        if not for_api:
+            return [{u'id': row[0], u'name': row[1], u'total_authority': row[2]} for row in self.cursor.fetchall()]
+        else:
+            return [{u'topic': row[1], u'total_authority': row[2]} for row in self.cursor.fetchall()]
 
 
 class UserModel(BaseModel):

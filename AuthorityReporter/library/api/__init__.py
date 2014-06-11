@@ -787,3 +787,138 @@ class Author(restful.Resource):
            :statuscode 200: no error
         """
         return models.UserModel(user_name, app_args).get_row()
+
+
+class PageAuthors(restful.Resource):
+
+    urls = [u"/api/wiki/<int:wiki_id>/article/<int:article_id>/authors",
+            u"/api/wiki/<int:wiki_id>/article/<int:article_id>/authors/"]
+
+    def get(self, wiki_id, article_id):
+        """
+        Access a JSON response for the top authors for the given wiki
+        :param wiki_id: the ID of the wiki
+        :type wiki_id: int
+        :param article_id: the id of the article
+        :type article_id: int
+        :return: the response dict
+        :rtype: dict
+
+        .. http:get:: /api/wiki/(int:wiki_id)/article/(int:article_id)/authors
+
+           Top authors for this page, sorted by authority
+
+           **Example request**:
+
+           .. sourcecode:: http
+
+              GET /wiki/123/article/321/authors HTTP/1.1
+              Host: authority_api_server.example.com
+              Accept: application/json, text/javascript
+
+           **Example response**:
+
+           .. sourcecode:: http
+
+              HTTP/1.1 200 OK
+              Vary: Accept
+              Content-Type: text/javascript
+
+
+              {
+                  wiki_id: 123
+                  article_id: 321,
+                  limit: 10,
+                  offset: 0,
+                  authors: [
+                      {
+                        id: 1234,
+                        name: "Foo_barson",
+                        contribs: 1.234,
+                      },
+                      ...
+                  ]
+              }
+
+           :query offset: offset number. default is 0
+           :query limit: limit number. default is 10
+           :resheader Content-Type: application/json
+           :statuscode 200: no error
+        """
+        request_args = get_request_parser().parse_args()
+        return {
+            u'wiki_id': wiki_id,
+            u'article_id': article_id,
+            u'offset': request_args[u'offset'],
+            u'limit': request_args[u'limit'],
+            u'authors': models.PageModel(wiki_id, article_id, app_args).get_users(**request_args)
+        }
+
+
+class PageTopics(restful.Resource):
+
+    urls = [u"/api/wiki/<int:wiki_id>/article/<int:article_id>/topics",
+            u"/api/wiki/<int:wiki_id>/article/<int:article_id>/topics/"]
+
+    def get(self, wiki_id, article_id):
+        """
+        Access a JSON response for the top topics for the given page, sorted by total authority
+        :param wiki_id: the ID of the wiki
+        :type wiki_id: int
+        :param article_id: the id of the article
+        :type article_id: int
+        :return: the response dict
+        :rtype: dict
+
+        .. http:get:: /api/wiki/(int:wiki_id)/article/(int:article_id)/topics
+
+           Top topics for this page, sorted by total global authority for that topic
+
+           **Example request**:
+
+           .. sourcecode:: http
+
+              GET /wiki/123/article/321/topics HTTP/1.1
+              Host: authority_api_server.example.com
+              Accept: application/json, text/javascript
+
+           **Example response**:
+
+           .. sourcecode:: http
+
+              HTTP/1.1 200 OK
+              Vary: Accept
+              Content-Type: text/javascript
+
+
+              {
+                  wiki_id: 123,
+                  article_id: 321,
+                  limit: 10,
+                  offset: 0,
+                  topics: [
+                      {
+                        topic: "foo",
+                        authority: 1.02325,
+                      },
+                      ...
+                  ]
+              }
+
+           :query offset: offset number. default is 0
+           :query limit: limit number. default is 10
+           :resheader Content-Type: application/json
+           :statuscode 200: no error
+        """
+        request_args = get_request_parser().parse_args()
+        return {
+            u'article_id': article_id,
+            u'wiki_id': wiki_id,
+            u'offset': request_args[u'offset'],
+            u'limit': request_args[u'limit'],
+            u'topics': models.PageModel(wiki_id, article_id, app_args).get_topics(**request_args)
+        }
+
+
+class Page(restful.Resource):
+    pass
