@@ -491,3 +491,64 @@ class Topic(restful.Resource):
            :statuscode 200: no error
         """
         return models.TopicModel(topic, app_args).get_row()
+
+
+class AuthorWikis(restful.Resource):
+
+    urls = [u"/api/author/<string:user_name>/wikis/", u"/api/author/<string:user_name>/wikis"]
+
+    def get(self, user_name):
+        """
+        Access a JSON response for the top wikis for the given user
+        :param user_name: the name of the user in question
+        :type topic: str
+        :return: the response dict
+        :rtype: dict
+
+        .. http:get:: /user/(str:user_name)/wikis
+
+           Top wikis for this user, sorted by total authority
+
+           **Example request**:
+
+           .. sourcecode:: http
+
+              GET /user/sactage/wikis HTTP/1.1
+              Host: authority_api_server.example.com
+              Accept: application/json, text/javascript
+
+           **Example response**:
+
+           .. sourcecode:: http
+
+              HTTP/1.1 200 OK
+              Vary: Accept
+              Content-Type: text/javascript
+
+
+              {
+                  user: "sactage",
+                  limit: 10,
+                  offset: 0,
+                  wikis: [
+                      {
+                        wiki_url: 'http://batman.wikia.com/',
+                        wiki_id: 1234,
+                        total_topic_authority: 2.245642
+                      },
+                      ...
+                  ]
+              }
+
+           :query offset: offset number. default is 0
+           :query limit: limit number. default is 10
+           :resheader Content-Type: application/json
+           :statuscode 200: no error
+        """
+        request_args = get_request_parser().parse_args()
+        return {
+            u'user': user_name,
+            u'limit': request_args[u'limit'],
+            u'offset': request_args[u'offset'],
+            u'wikis': models.UserModel(user_name, app_args).get_wikis(**request_args)
+        }

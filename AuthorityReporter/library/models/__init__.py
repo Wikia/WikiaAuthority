@@ -639,33 +639,40 @@ class UserModel(BaseModel):
 
         return ordered_page_results
 
-    def get_wikis(self, limit=10):
+    def get_wikis(self, limit=10, offset=0, for_api=False):
         """
         Most important wikis for this user
         Calculated by sum of contribs times global authority
         :param limit: the limit
         :type limit: int
-        :return: an ordereddict of wiki ids to wiki dicts
-        :rtype:class:`collections.OrderedDict`
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we add less
+        :type for_api: bool
+        :return: an ordereddict of wiki ids to wiki dicts, or a list, for API
+        :rtype: `collections.OrderedDict`|list
         """
         self.cursor.execute(u"""
-SELECT wikis.wiki_id
+SELECT wikis.wiki_id, wikis.url, SUM(articles_users.contribs * articles.global_authority) AS total_authority
 FROM users
   INNER JOIN articles_users ON users.user_name = '%s' AND articles_users.user_id = users.user_id
   INNER JOIN wikis on wikis.wiki_id = articles_users.wiki_id
   INNER JOIN articles ON articles.article_id = articles_users.article_id AND articles.wiki_id = articles_users.wiki_id
-GROUP BY wikis.wiki_id ORDER BY SUM(articles_users.contribs * articles.global_authority) DESC LIMIT %d;
+GROUP BY wikis.wiki_id ORDER BY total_authority DESC LIMIT %d OFFSET %d;
 -- selects the most important wiki a user has contributed the most to
-    """ % (self.db.escape_string(self.user_name), limit))
+    """ % (self.db.escape_string(self.user_name), limit, offset))
 
-        wiki_ids = [str(x[0]) for x in self.cursor.fetchall()]
+        if not for_api:
+            wiki_ids = [str(x[0]) for x in self.cursor.fetchall()]
 
-        result = requests.get(u'http://www.wikia.com/api/v1/Wikis/Details',
-                              params=dict(ids=u','.join(wiki_ids)))
+            result = requests.get(u'http://www.wikia.com/api/v1/Wikis/Details',
+                                  params=dict(ids=u','.join(wiki_ids)))
 
-        wikis = result.json().get(u'items', {})
+            wikis = result.json().get(u'items', {})
 
-        return OrderedDict([(wid, wikis.get(wid)) for wid in wiki_ids])
+            return OrderedDict([(wid, wikis.get(wid)) for wid in wiki_ids])
+        else:
+            return [dict(wiki_id=row[0], wiki_url=row[1], total_authority=row[2]) for row in self.cursor.fetchall()]
 
     def get_topics(self, limit=10):
         """
