@@ -48,7 +48,7 @@ class WikiTopics(restful.Resource):
         :return: the response dict
         :rtype: dict
 
-        .. http:get:: /wiki/(int:wiki_id)/topics
+        .. http:get:: /api/wiki/(int:wiki_id)/topics
 
            Top topics for this wiki, sorted by authority
 
@@ -108,7 +108,7 @@ class WikiAuthors(restful.Resource):
         :return: the response dict
         :rtype: dict
 
-        .. http:get:: /wiki/(int:wiki_id)/authors
+        .. http:get:: /api/wiki/(int:wiki_id)/authors
 
            Top authors for this wiki, sorted by authority
 
@@ -169,7 +169,7 @@ class WikiPages(restful.Resource):
         :return: the response dict
         :rtype: dict
 
-        .. http:get:: /wiki/(int:wiki_id)/pages
+        .. http:get:: /api/wiki/(int:wiki_id)/pages
 
            Top pages for this wiki, sorted by authority
 
@@ -229,7 +229,7 @@ class Wiki(restful.Resource):
         :return: the response dict
         :rtype: dict
 
-        .. http:get:: /wiki/(int:wiki_id)
+        .. http:get:: /api/wiki/(int:wiki_id)
 
            Authority data for this wiki
 
@@ -276,7 +276,7 @@ class TopicPages(restful.Resource):
         :return: the response dict
         :rtype: dict
 
-        .. http:get:: /topic/(str:topic)/pages
+        .. http:get:: /api/topic/(str:topic)/pages
 
            Top pages for this topic, sorted by global authority
 
@@ -338,7 +338,7 @@ class TopicWikis(restful.Resource):
         :return: the response dict
         :rtype: dict
 
-        .. http:get:: /topic/(str:topic)/wikis
+        .. http:get:: /api/topic/(str:topic)/wikis
 
            Top wikis for this topic, sorted by total topic authority
 
@@ -399,7 +399,7 @@ class TopicAuthors(restful.Resource):
         :return: the response dict
         :rtype: dict
 
-        .. http:get:: /topic/(str:topic)/authors
+        .. http:get:: /api/topic/(str:topic)/authors
 
            Top wikis for this topic, sorted by total topic authority
 
@@ -460,7 +460,7 @@ class Topic(restful.Resource):
         :return: the response dict
         :rtype: dict
 
-        .. http:get:: /topic/(str:topic)
+        .. http:get:: /api/topic/(str:topic)
 
            Authority data for this wiki
 
@@ -505,7 +505,7 @@ class AuthorWikis(restful.Resource):
         :return: the response dict
         :rtype: dict
 
-        .. http:get:: /user/(str:user_name)/wikis
+        .. http:get:: /api/user/(str:user_name)/wikis
 
            Top wikis for this user, sorted by total authority
 
@@ -566,7 +566,7 @@ class AuthorTopics(restful.Resource):
         :return: the response dict
         :rtype: dict
 
-        .. http:get:: /user/(str:user_name)/wikis
+        .. http:get:: /api/user/(str:user_name)/wikis
 
            Top topics for this user, sorted by total authority
 
@@ -626,7 +626,7 @@ class AuthorPages(restful.Resource):
         :return: the response dict
         :rtype: dict
 
-        .. http:get:: /user/(str:user_name)/pages
+        .. http:get:: /api/user/(str:user_name)/pages
 
            Top pages for this user, sorted by total authority
 
@@ -673,4 +673,71 @@ class AuthorPages(restful.Resource):
             u'limit': request_args[u'limit'],
             u'offset': request_args[u'offset'],
             u'pages': models.UserModel(user_name, app_args).get_pages(**request_args)
+        }
+
+
+class AuthorWikiTopics(restful.Resource):
+
+    urls = [
+        u"/api/author/<string:user_name>/topics/wiki/<int:wiki_id>",
+        u"/api/author/<string:user_name>/topics/wiki/<int:wiki_id>/",
+        u"/api/wiki/<int:wiki_id>/topics/author/<string:user_name>/",
+        u"/api/wiki/<int:wiki_id>/topics/author/<string:user_name>",
+    ]
+
+    def get(self, user_name, wiki_id):
+        """
+        Access a JSON response for the top topics for the given user and wiki
+        :param user_name: the name of the user in question
+        :type user_name: str
+        :param wiki_id: the id of the wiki
+        :type wiki_id: int
+        :return: the response dict
+        :rtype: dict
+
+        .. http:get:: /api/user/(str:user_name)/topics/wiki/(int:wiki_id)/
+
+           Drill down the top topics for this user by a given wiki ID
+
+           **Example request**:
+
+           .. sourcecode:: http
+
+              GET /user/sactage/topics/wiki/3125 HTTP/1.1
+              Host: authority_api_server.example.com
+              Accept: application/json, text/javascript
+
+           **Example response**:
+
+           .. sourcecode:: http
+
+              HTTP/1.1 200 OK
+              Vary: Accept
+              Content-Type: text/javascript
+
+
+              {
+                  user: "sactage",
+                  limit: 10,
+                  offset: 0,
+                  topics: [
+                      {
+                        topic: "foo",
+                        authority: 1.02325,
+                      },
+                      ...
+                  ]
+              }
+
+           :query offset: offset number. default is 0
+           :query limit: limit number. default is 10
+           :resheader Content-Type: application/json
+           :statuscode 200: no error
+        """
+        request_args = get_request_parser().parse_args()
+        return {
+            u'user': user_name,
+            u'limit': request_args[u'limit'],
+            u'offset': request_args[u'offset'],
+            u'topics': models.UserModel(user_name, app_args).get_topics_for_wiki(**request_args).values()
         }
