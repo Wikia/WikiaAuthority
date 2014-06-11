@@ -145,7 +145,7 @@ class WikiAuthors(restful.Resource):
             u'wiki_id': wiki_id,
             u'offset': request_args[u'offset'],
             u'limit': request_args[u'limit'],
-            u'authors': models.WikiModel(wiki_id, app_args).get_topics(**request_args)
+            u'authors': models.WikiModel(wiki_id, app_args).get_authors(**request_args)
         }
 
 
