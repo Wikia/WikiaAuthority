@@ -603,41 +603,51 @@ class UserModel(BaseModel):
         BaseModel.__init__(self, args)
         self.user_name = user_name
 
-    def get_pages(self, limit=10):
+    def get_pages(self, limit=10, offset=0, for_api=False):
         """
         Gets top pages for this author
         calculated by contribs times global authority
         :param limit: how many you want
         :type limit: int
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we add less
+        :type for_api: bool
         :return: a list of dicts
         :rtype: list
         """
         self.cursor.execute(u"""
-    SELECT wikis.url, articles.article_id, wikis.title
+    SELECT wikis.url, articles.article_id, wikis.title,
+           wikis.wiki_id, articles_users.contribs * articles.global_authority as authority
     FROM users
       INNER JOIN articles_users ON users.user_name = '%s' AND articles_users.user_id = users.user_id
       INNER JOIN wikis on wikis.wiki_id = articles_users.wiki_id
       INNER JOIN articles ON articles.article_id = articles_users.article_id
                           AND articles.wiki_id = articles_users.wiki_id
-    ORDER BY articles_users.contribs * articles.global_authority DESC LIMIT %d;
+    ORDER BY authority DESC LIMIT %d OFFSET %d;
     -- selects the most important pages a user has contributed to the most to
-    """ % (self.db.escape_string(self.user_name), limit))
-        url_to_ids = defaultdict(list)
-        ordered_db_results = [(y[0], str(y[1]), str(y[2])) for y in self.cursor.fetchall()]
-        map(lambda x: url_to_ids[x[0]].append(x[1]), ordered_db_results)
-        url_to_articles = dict()
-        for url, ids in url_to_ids.items():
-            response = requests.get(u'%s/api/v1/Articles/Details' % url, params=dict(ids=u','.join(ids)))
-            url_to_articles[url] = dict(response.json().get(u'items', {}))
+    """ % (self.db.escape_string(self.user_name), limit, offset))
 
-        ordered_page_results = []
-        for url, page_id, wiki_title in ordered_db_results:
-            result = dict(base_url=url, **url_to_articles[url].get(page_id, {}))
-            result[u'full_url'] = (result.get(u'base_url', '').strip(u'/') + result.get(u'url', ''))
-            result[u'wiki_title'] = wiki_title
-            ordered_page_results.append(result)
+        if not for_api:
+            url_to_ids = defaultdict(list)
+            ordered_db_results = [(y[0], str(y[1]), str(y[2])) for y in self.cursor.fetchall()]
+            map(lambda x: url_to_ids[x[0]].append(x[1]), ordered_db_results)
+            url_to_articles = dict()
+            for url, ids in url_to_ids.items():
+                response = requests.get(u'%s/api/v1/Articles/Details' % url, params=dict(ids=u','.join(ids)))
+                url_to_articles[url] = dict(response.json().get(u'items', {}))
 
-        return ordered_page_results
+            ordered_page_results = []
+            for url, page_id, wiki_title in ordered_db_results:
+                result = dict(base_url=url, **url_to_articles[url].get(page_id, {}))
+                result[u'full_url'] = (result.get(u'base_url', '').strip(u'/') + result.get(u'url', ''))
+                result[u'wiki_title'] = wiki_title
+                ordered_page_results.append(result)
+
+            return ordered_page_results
+        else:
+            return [dict(wiki_url=row[0], article_id=row[1], wiki_id=row[3], authority=row[4])
+                    for row in self.cursor.fetchall()]
 
     def get_wikis(self, limit=10, offset=0, for_api=False):
         """
