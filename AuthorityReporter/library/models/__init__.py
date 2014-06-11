@@ -703,7 +703,7 @@ GROUP BY wikis.wiki_id ORDER BY total_authority DESC LIMIT %d OFFSET %d;
                    INNER JOIN articles ON articles.article_id = au.article_id AND articles.wiki_id = au.wiki_id
                    INNER JOIN topics ON topics.topic_id = art.topic_id
         GROUP BY topics.topic_id
-        ORDER BY topic_authority""" % self.user_name
+        ORDER BY topic_authority DESC""" % self.user_name
 
         if limit:
             sql += u" LIMIT %d" % limit
@@ -739,7 +739,7 @@ GROUP BY wikis.wiki_id ORDER BY total_authority DESC LIMIT %d OFFSET %d;
                    INNER JOIN articles ON articles.article_id = au.article_id AND articles.wiki_id = au.wiki_id
                    INNER JOIN topics ON topics.topic_id = art.topic_id
         GROUP BY topics.topic_id
-        ORDER BY topic_authority""" % (wiki_id, self.user_name)
+        ORDER BY topic_authority DESC""" % (wiki_id, self.user_name)
 
         if limit:
             sql += u" LIMIT %d" % limit
