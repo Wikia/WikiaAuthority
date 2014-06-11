@@ -444,7 +444,7 @@ class TopicAuthors(restful.Resource):
             u'topic': topic,
             u'limit': request_args[u'limit'],
             u'offset': request_args[u'offset'],
-            u'authors': models.TopicModel(topic, app_args).get_authors(**request_args)
+            u'authors': models.TopicModel(topic, app_args).get_users(**request_args)
         }
 
 
