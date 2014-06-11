@@ -1,13 +1,18 @@
 import argparse
 import json
-import xlwt
 import mimetypes
 import StringIO
+
+import xlwt
 from flask import Flask, render_template, Response
+from flask.ext import restful
 from werkzeug.datastructures import Headers
-from wikia_dstk.authority import add_db_arguments
 from nlp_services.caching import use_caching
-from models import TopicModel, WikiModel, PageModel, UserModel
+
+from library import api
+from wikia_dstk.authority import add_db_arguments
+from AuthorityReporter.library.models import TopicModel, WikiModel, PageModel, UserModel
+
 
 use_caching()
 
@@ -185,7 +190,7 @@ def users_for_topic_xls(topic):
     titles = [u"Name", u"Authority"]
     keys = [u"user_name", u"total_authority"]
     map(lambda (cell, title): worksheet.write(0, cell, title), enumerate(titles))
-    users = TopicModel(topic, args).get_users(limit=1000, with_api=False)
+    users = TopicModel(topic, args).get_users(limit=1000, for_api=True)
     map(lambda (row, user): map(lambda (cell, key): worksheet.write(row+1, cell, user[key]),
                                 enumerate(keys)),
         enumerate(users))
@@ -239,7 +244,10 @@ def main():
                         help=u"App port")
     args = parser.parse_args()
 
+    api.register_args(args)
     app.debug = True
+    app_api = restful.Api(app)
+    api.register_resources(app_api)
     app.run(host=args.app_host, port=args.app_port)
 
 

@@ -1,17 +1,11 @@
 from wikia_dstk.authority import get_db_and_cursor
-from nlp_services.authority import WikiAuthorityService
-from nlp_services.authority import WikiAuthorTopicAuthorityService, WikiAuthorsToIdsService
-from nlp_services.authority import WikiTopicsToAuthorityService
-from collections import defaultdict, OrderedDict
-from nlp_services.caching import use_caching
+from collections import OrderedDict
 from multiprocessing import Pool
 import requests
 import xlwt
 from collections import defaultdict
 from nlp_services.caching import use_caching
 from nlp_services.pooling import set_global_num_processes
-from nlp_services.authority import WikiAuthorityService, WikiTopicsToAuthorityService, WikiAuthorTopicAuthorityService
-from nlp_services.authority import WikiAuthorsToIdsService
 
 
 class BaseModel():
@@ -51,16 +45,20 @@ class TopicModel(BaseModel):
         self.topic = topic
         BaseModel.__init__(self, args)
 
-    def get_pages(self, limit=10):
+    def get_pages(self, limit=10, offset=None, for_api=False):
         """
         Gets most authoritative pages for a topic using Authority DB and Wikia API data
         :param limit: Number of results we want
         :type limit: int
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we add less
+        :type for_api: bool
         :return: a list of objects reflecting page results
         :rtype: list
         """
 
-        self.cursor.execute(u"""
+        sql = u"""
     SELECT wikis.url, wikis.title, wikis.wiki_id, articles.article_id, articles.global_authority  AS auth
     FROM topics INNER JOIN articles_topics ON topics.name = '%s' AND topics.topic_id = articles_topics.topic_id
     INNER JOIN articles ON articles.article_id = articles_topics.article_id
@@ -68,42 +66,65 @@ class TopicModel(BaseModel):
     INNER JOIN wikis ON wikis.wiki_id = articles.wiki_id
     ORDER BY auth DESC
     LIMIT %d
-    """ % (self.db.escape_string(self.topic), limit))
+    """ % (self.db.escape_string(self.topic), limit)
+
+        if offset:
+            sql += u" OFFSET %d" % offset
+
+        self.cursor.execute(sql)
         ordered_db_results = [(y[0], y[1], unicode(y[2]), unicode(y[3]), y[4]) for y in self.cursor.fetchall()]
         url_to_ids = defaultdict(list)
         map(lambda x: url_to_ids[x[0]].append(x[3]), ordered_db_results)
 
-        url_to_articles = dict(Pool(processes=8).map_async(get_page_response, list(url_to_ids.items())).get())
+        if not for_api:
+            url_to_articles = dict(Pool(processes=8).map_async(get_page_response, list(url_to_ids.items())).get())
 
-        ordered_page_results = []
-        for url, wiki_name, wiki_id, page_id, authority in ordered_db_results:
-            result = dict(base_url=url, **url_to_articles[url].get(unicode(page_id), {}))
-            result[u'full_url'] = (result.get(u'base_url', '').strip(u'/') + result.get(u'url', ''))
-            result[u'wiki'] = wiki_name
-            result[u'authority'] = authority
-            result[u'wiki_id'] = wiki_id
-            result[u'page_id'] = page_id
-            ordered_page_results.append(result)
+            ordered_page_results = []
+            for url, wiki_name, wiki_id, page_id, authority in ordered_db_results:
+                result = dict(base_url=url, **url_to_articles[url].get(unicode(page_id), {}))
+                result[u'full_url'] = (result.get(u'base_url', '').strip(u'/') + result.get(u'url', ''))
+                result[u'wiki'] = wiki_name
+                result[u'authority'] = authority
+                result[u'wiki_id'] = wiki_id
+                result[u'page_id'] = page_id
+                ordered_page_results.append(result)
+        else:
+            ordered_page_results = [dict(wiki_url=row[0], wiki_id=row[2], article_id=row[3], authority=row[4])
+                                    for row in ordered_db_results]
 
         return ordered_page_results
 
-    def get_wikis(self, limit=10):
+    def get_wikis(self, limit=10, offset=0, for_api=False):
         """
         Gets wikis for the current topic
         :param limit: the number of wikis we want
         :type limit: int
-        :return: a dict with keys for wikis (objects) and wiki ids (ints) for ordering
-        :rtype: dict
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we add less
+        :type for_api: bool
+        :return: a dict with keys for wikis (objects) and wiki ids (ints) for ordering or an ordered list of dicts
+        :rtype: dict|list
         """
-        self.cursor.execute(u"""
-SELECT wikis.wiki_id, SUM(articles.global_authority) AS total_auth
+
+        sql = u"""
+SELECT wikis.wiki_id, SUM(articles.global_authority) AS total_auth, wikis.url
 FROM topics
   INNER JOIN articles_topics ON topics.name = '%s' AND topics.topic_id = articles_topics.topic_id
   INNER JOIN articles ON articles.article_id = articles_topics.article_id AND articles.wiki_id = articles_topics.wiki_id
   INNER JOIN wikis ON articles.wiki_id = wikis.wiki_id
   GROUP BY articles.wiki_id ORDER BY total_auth DESC LIMIT %d
     -- selects the best wikis for a given topic
-                        """ % (self.db.escape_string(self.topic), limit))
+                        """ % (self.db.escape_string(self.topic), limit)
+
+        if offset:
+            sql += u" OFFSET %d" % offset
+
+        self.cursor.execute(sql)
+
+        if for_api:
+            return [dict(wiki_id=row[0], total_topic_authority=row[1], wiki_url=row[2])
+                    for row in self.cursor.fetchall()]
 
         wids_to_auth = OrderedDict([(row[0], row[1]) for row in self.cursor.fetchall()])
         wiki_ids = map(str, wids_to_auth.keys())
@@ -117,29 +138,39 @@ FROM topics
 
         return dict(wikis=wikis, wiki_ids=wiki_ids)
 
-    def get_users(self, limit=10, with_api=True):
+    def get_users(self, limit=10, offset=0, for_api=False):
         """
         Gets users for a given topic
         :param limit: the number of users we want
         :type limit: int
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we add less
+        :type for_api: bool
         :return: a list of objects related to authors
         :rtype: list
         """
 
-        try:
-            self.cursor.execute(u"""
+        sql = u"""
     SELECT users.user_id, users.user_name, SUM(articles_users.contribs * articles.global_authority) AS auth
     FROM topics
       INNER JOIN articles_topics ON topics.name = '%s' AND topics.topic_id = articles_topics.topic_id
       INNER JOIN articles_users ON articles_topics.article_id = articles_users.article_id
-                                   AND articles_topics.wiki_id = articles_users.wiki_id
-      INNER JOIN articles ON articles.article_id = articles_users.article_id AND articles.wiki_id = articles_users.wiki_id
+                               AND articles_topics.wiki_id = articles_users.wiki_id
+      INNER JOIN articles ON articles.article_id = articles_users.article_id
+                         AND articles.wiki_id = articles_users.wiki_id
       INNER JOIN users ON articles_users.user_id = users.user_id
     GROUP BY users.user_id
     ORDER BY auth DESC
     LIMIT %d
     -- selects the most influential authors for a given topic
-        """ % (self.db.escape_string(self.topic), limit))
+        """ % (self.db.escape_string(self.topic), limit)
+
+        if offset:
+            sql += u" OFFSET %d" % offset
+
+        try:
+            self.cursor.execute(sql)
         except UnicodeEncodeError:
             return []
 
@@ -147,7 +178,7 @@ FROM topics
 
         user_api_data = []
 
-        if with_api:
+        if not for_api:
             for i in range(0, limit, 25):
                 response = requests.get(u'http://www.wikia.com/api/v1/User/Details',
                                         params={u'ids': u','.join([str(x[0]) for x in user_data[i:i+25]])})
@@ -159,7 +190,7 @@ FROM topics
         id_to_auth = OrderedDict([(x[0], {u'id': x[0], u'user_name': x[1], u'total_authority': x[2]})
                                   for x in user_data])
         author_objects = []
-        if with_api:
+        if not for_api:
             for obj in user_api_data:
                 obj[u'total_authority'] = id_to_auth[obj[u'user_id']][u'total_authority']
                 author_objects.append(obj)
@@ -167,6 +198,16 @@ FROM topics
             author_objects = id_to_auth.values()
 
         return author_objects
+
+    def get_row(self):
+        """
+        Gets the database for this topic
+        :rtype: dict
+        :return: a dict representing the row and its column titles
+        """
+        self.cursor.execute(u'SELECT * FROM topics WHERE name = "%s"' % self.db.escape_string(self.topic))
+        row = self.cursor.fetchone()
+        return dict(topic_id=row[0], topic=row[1], total_authority=row[2])
 
 
 class WikiModel(BaseModel):
@@ -191,11 +232,25 @@ class WikiModel(BaseModel):
                                           params=dict(ids=self.wiki_id)).json()[u'items'][self.wiki_id]
         return self._api_data
 
-    def get_topics(self, limit=10):
+    def get_row(self):
+        """
+        Gets the database for this wiki
+        :rtype: dict
+        :return: a dict representing the row and its column titles
+        """
+        self.cursor.execute(u"SELECT * FROM wikis WHERE wiki_id = %d" % self.wiki_id)
+        row = self.cursor.fetchone()
+        return dict(wiki_id=row[0], wam_score=row[1], title=row[2], url=row[3], authority=row[4])
+
+    def get_topics(self, limit=10, offset=None, for_api=False):
         """
         Get topics for this wiki
         :param limit: number of topics to get
-        :type limit: int
+        :type limit: int|None
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we add less
+        :type for_api: bool
         :return: a list of dicts
         :rtype: list
         """
@@ -211,10 +266,13 @@ class WikiModel(BaseModel):
         if limit:
             sql += u" LIMIT %d" % limit
 
+        if offset:
+            sql += u" OFFSET %d" % offset
+
         self.cursor.execute(sql)
 
         results = [dict(topic=x[0], authority=x[1]) for x in self.cursor.fetchall()]
-        if limit:
+        if limit and not for_api:
             for result in results:
                 result[u'authors'] = TopicModel(result[u'topic'], self.args).get_users(limit=5)
 
@@ -235,11 +293,15 @@ class WikiModel(BaseModel):
 
         return OrderedDict([(x[0], dict(id=x[0], name=x[1], total_authority=x[2])) for x in self.cursor.fetchall()])
 
-    def get_authors(self, limit=10):
+    def get_authors(self, limit=10, offset=None, for_api=False):
         """
         Provides the top authors for a wiki
         :param limit: number of authors you want
         :type limit: int
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we add less
+        :type for_api: bool
         :return: list of author dicts
         :rtype: list
         """
@@ -255,12 +317,15 @@ class WikiModel(BaseModel):
         if limit:
             sql += u" LIMIT %d" % limit
 
+        if offset:
+            sql += u" OFFSET %d" % offset
+
         self.cursor.execute(sql)
 
         authors_dict = OrderedDict([(x[0], dict(id=x[0], name=x[1], total_authority=x[2]))
                                     for x in self.cursor.fetchall()])
 
-        if limit:
+        if limit and not for_api:
             user_api_data = requests.get(self.api_data[u'url']+u'/api/v1/User/Details',
                                          params={u'ids': u",".join(map(str, authors_dict.keys())),
                                                  u'format': u'json'}).json()[u'items']
@@ -270,18 +335,31 @@ class WikiModel(BaseModel):
 
         return authors_dict.values()
 
-    def get_pages(self, limit=10):
+    def get_pages(self, limit=10, offset=None, for_api=False):
         """
         Gets most authoritative pages for this wiki
         :param limit: the number of pages you want
         :type limit: int
-        :return: a list of page objects
-        :rtype: list
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we add less
+        :type for_api: bool
+        :return: a list of page objects if not for api, otherwise an ordereddict
+        :rtype: list|OrderedDict
         """
-        self.cursor.execute(u"""SELECT article_id, local_authority FROM articles
-                           WHERE wiki_id = %s ORDER BY local_authority DESC LIMIT %d""" % (self.wiki_id, limit))
-        id_to_authority = [(row[0], row[1]) for row in self.cursor.fetchall()]
 
+        sql = u"""SELECT article_id, local_authority FROM articles
+                   WHERE wiki_id = %s ORDER BY local_authority DESC LIMIT %d""" % (self.wiki_id, limit)
+
+        if offset:
+            sql += u" OFFSET %d" % offset
+
+        self.cursor.execute(sql)
+
+        if for_api:
+            return [dict(id=row[0], authority=row[1]) for row in self.cursor.fetchall()]
+
+        id_to_authority = [(row[0], row[1]) for row in self.cursor.fetchall()]
         response = requests.get(self.api_data[u'url']+u'api/v1/Articles/Details',
                                 params=dict(ids=u','.join([str(a[0]) for a in id_to_authority])))
 
@@ -468,45 +546,70 @@ class PageModel(BaseModel):
                                           params=dict(ids=self.page_id)).json()[u'items'][self.page_id]
         return self._api_data
 
-    def get_users(self, limit=10):
+    def get_users(self, limit=10, offset=0, for_api=False):
         """
         Get the most authoritative users for this page
         :param limit: the number of users you want
         :type limit: int
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we add less
+        :type for_api: bool
         :return: a list of of user dicts in order of authority
         :rtype: list
         """
 
         self.cursor.execute(u"""SELECT users.user_id, users.user_name, contribs FROM articles_users
                        INNER JOIN users ON wiki_id = %s AND article_id = %s AND users.user_id = articles_users.user_id
-                       ORDER BY contribs desc LIMIT %d""" % (self.wiki_id, self.page_id, limit))
+                       ORDER BY contribs desc LIMIT %d OFFSET %d""" % (self.wiki_id, self.page_id, limit, offset))
 
         users_dict = OrderedDict([(a[0], {u'id': a[0], u'name': a[1], u'contribs': a[2]})
                                   for a in self.cursor.fetchall()])
 
-        user_api_data = requests.get(self.wiki.api_data[u'url']+u'/api/v1/User/Details',
-                                     params={u'ids': u','.join(map(lambda x: str(x), users_dict.keys())),
-                                             u'format': u'json'}).json()[u'items']
+        if not for_api:
+            user_api_data = requests.get(self.wiki.api_data[u'url']+u'/api/v1/User/Details',
+                                         params={u'ids': u','.join(map(lambda x: str(x), users_dict.keys())),
+                                                 u'format': u'json'}).json()[u'items']
 
-        map(lambda x: users_dict[x[u'user_id']].update(x), user_api_data)
+            map(lambda x: users_dict[x[u'user_id']].update(x), user_api_data)
 
         return users_dict.values()
 
-    def get_topics(self, limit=10):
+    def get_topics(self, limit=10, offset=0, for_api=False):
         """
         Get the topics for the current page
         :param limit: how much you want fool
         :type limit: int
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we add less
+        :type for_api: bool
         :return: a list of dicts
         :rtype: list
         """
 
-        self.cursor.execute(u"""SELECT topics.topic_id, topics.name
+        self.cursor.execute(u"""SELECT topics.topic_id, topics.name, topics.total_authority
                        FROM topics INNER JOIN articles_topics ON wiki_id = %s AND article_id = %s
                                               AND topics.topic_id = articles_topics.topic_id
-                       ORDER BY topics.total_authority DESC LIMIT %d""" % (self.wiki_id, self.page_id, limit))
+                       ORDER BY topics.total_authority DESC LIMIT %d OFFSET %d"""
+                            % (self.wiki_id, self.page_id, limit, offset))
 
-        return [{u'id': row[0], u'name': row[1]} for row in self.cursor.fetchall()]
+        if not for_api:
+            return [{u'id': row[0], u'name': row[1], u'total_authority': row[2]} for row in self.cursor.fetchall()]
+        else:
+            return [{u'topic': row[1], u'total_authority': row[2]} for row in self.cursor.fetchall()]
+
+    def get_row(self):
+        """
+        Returns the row from the DB as a dict
+        :return: row data
+        :rtype: dict
+        """
+        self.cursor.execute(u'SELECT * FROM articles WHERE doc_id = "%d_%d"' % (self.wiki_id, self.page_id))
+        row = self.cursor.fetchone()
+        return dict(zip([u'doc_id', u'article_id', u'wiki_id', u'pageviews',
+                         u'local_authority', u'local_authority_pv', u'global_authority'],
+                    row))
 
 
 class UserModel(BaseModel):
@@ -525,77 +628,98 @@ class UserModel(BaseModel):
         BaseModel.__init__(self, args)
         self.user_name = user_name
 
-    def get_pages(self, limit=10):
+    def get_pages(self, limit=10, offset=0, for_api=False):
         """
         Gets top pages for this author
         calculated by contribs times global authority
         :param limit: how many you want
         :type limit: int
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we add less
+        :type for_api: bool
         :return: a list of dicts
         :rtype: list
         """
         self.cursor.execute(u"""
-    SELECT wikis.url, articles.article_id, wikis.title
+    SELECT wikis.url, articles.article_id, wikis.title,
+           wikis.wiki_id, articles_users.contribs * articles.global_authority as authority
     FROM users
       INNER JOIN articles_users ON users.user_name = '%s' AND articles_users.user_id = users.user_id
       INNER JOIN wikis on wikis.wiki_id = articles_users.wiki_id
       INNER JOIN articles ON articles.article_id = articles_users.article_id
                           AND articles.wiki_id = articles_users.wiki_id
-    ORDER BY articles_users.contribs * articles.global_authority DESC LIMIT %d;
+    ORDER BY authority DESC LIMIT %d OFFSET %d;
     -- selects the most important pages a user has contributed to the most to
-    """ % (self.db.escape_string(self.user_name), limit))
-        url_to_ids = defaultdict(list)
-        ordered_db_results = [(y[0], str(y[1]), str(y[2])) for y in self.cursor.fetchall()]
-        map(lambda x: url_to_ids[x[0]].append(x[1]), ordered_db_results)
-        url_to_articles = dict()
-        for url, ids in url_to_ids.items():
-            response = requests.get(u'%s/api/v1/Articles/Details' % url, params=dict(ids=u','.join(ids)))
-            url_to_articles[url] = dict(response.json().get(u'items', {}))
+    """ % (self.db.escape_string(self.user_name), limit, offset))
 
-        ordered_page_results = []
-        for url, page_id, wiki_title in ordered_db_results:
-            result = dict(base_url=url, **url_to_articles[url].get(page_id, {}))
-            result[u'full_url'] = (result.get(u'base_url', '').strip(u'/') + result.get(u'url', ''))
-            result[u'wiki_title'] = wiki_title
-            ordered_page_results.append(result)
+        if not for_api:
+            url_to_ids = defaultdict(list)
+            ordered_db_results = [(y[0], str(y[1]), str(y[2])) for y in self.cursor.fetchall()]
+            map(lambda x: url_to_ids[x[0]].append(x[1]), ordered_db_results)
+            url_to_articles = dict()
+            for url, ids in url_to_ids.items():
+                response = requests.get(u'%s/api/v1/Articles/Details' % url, params=dict(ids=u','.join(ids)))
+                url_to_articles[url] = dict(response.json().get(u'items', {}))
 
-        return ordered_page_results
+            ordered_page_results = []
+            for url, page_id, wiki_title in ordered_db_results:
+                result = dict(base_url=url, **url_to_articles[url].get(page_id, {}))
+                result[u'full_url'] = (result.get(u'base_url', '').strip(u'/') + result.get(u'url', ''))
+                result[u'wiki_title'] = wiki_title
+                ordered_page_results.append(result)
 
-    def get_wikis(self, limit=10):
+            return ordered_page_results
+        else:
+            return [dict(wiki_url=row[0], article_id=row[1], wiki_id=row[3], authority=row[4])
+                    for row in self.cursor.fetchall()]
+
+    def get_wikis(self, limit=10, offset=0, for_api=False):
         """
         Most important wikis for this user
         Calculated by sum of contribs times global authority
         :param limit: the limit
         :type limit: int
-        :return: an ordereddict of wiki ids to wiki dicts
-        :rtype:class:`collections.OrderedDict`
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we add less
+        :type for_api: bool
+        :return: an ordereddict of wiki ids to wiki dicts, or a list, for API
+        :rtype: `collections.OrderedDict`|list
         """
         self.cursor.execute(u"""
-SELECT wikis.wiki_id
+SELECT wikis.wiki_id, wikis.url, SUM(articles_users.contribs * articles.global_authority) AS total_authority
 FROM users
   INNER JOIN articles_users ON users.user_name = '%s' AND articles_users.user_id = users.user_id
   INNER JOIN wikis on wikis.wiki_id = articles_users.wiki_id
   INNER JOIN articles ON articles.article_id = articles_users.article_id AND articles.wiki_id = articles_users.wiki_id
-GROUP BY wikis.wiki_id ORDER BY SUM(articles_users.contribs * articles.global_authority) DESC LIMIT %d;
+GROUP BY wikis.wiki_id ORDER BY total_authority DESC LIMIT %d OFFSET %d;
 -- selects the most important wiki a user has contributed the most to
-    """ % (self.db.escape_string(self.user_name), limit))
+    """ % (self.db.escape_string(self.user_name), limit, offset))
 
-        wiki_ids = [str(x[0]) for x in self.cursor.fetchall()]
+        if not for_api:
+            wiki_ids = [str(x[0]) for x in self.cursor.fetchall()]
 
-        result = requests.get(u'http://www.wikia.com/api/v1/Wikis/Details',
-                              params=dict(ids=u','.join(wiki_ids)))
+            result = requests.get(u'http://www.wikia.com/api/v1/Wikis/Details',
+                                  params=dict(ids=u','.join(wiki_ids)))
 
-        wikis = result.json().get(u'items', {})
+            wikis = result.json().get(u'items', {})
 
-        return OrderedDict([(wid, wikis.get(wid)) for wid in wiki_ids])
+            return OrderedDict([(wid, wikis.get(wid)) for wid in wiki_ids])
+        else:
+            return [dict(wiki_id=row[0], wiki_url=row[1], total_authority=row[2]) for row in self.cursor.fetchall()]
 
-    def get_topics(self, limit=10):
+    def get_topics(self, limit=10, offset=0, for_api=False):
         """
         Gets most important topics for this user
         :param limit: limit
         :type limit: int
-        :return: ordered dict of topic name to auth
-        :rtype:class:`collections.OrderedDict`
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we fix the naming
+        :type for_api: bool
+        :return: ordered dict of topic name to auth or a list of dicts
+        :rtype: `collections.OrderedDict`|list
         """
         sql = u"""
         SELECT topics.name, SUM(au.contribs * articles.local_authority) AS topic_authority
@@ -604,23 +728,33 @@ GROUP BY wikis.wiki_id ORDER BY SUM(articles_users.contribs * articles.global_au
                    INNER JOIN articles ON articles.article_id = au.article_id AND articles.wiki_id = au.wiki_id
                    INNER JOIN topics ON topics.topic_id = art.topic_id
         GROUP BY topics.topic_id
-        ORDER BY topic_authority""" % self.user_name
+        ORDER BY topic_authority DESC""" % self.user_name
 
         if limit:
             sql += u" LIMIT %d" % limit
 
-        self.cursor.execute(sql)
-        return OrderedDict([(x[0], dict(name=x[0], authority=x[1])) for x in self.cursor.fetchall()])
+        if offset:
+            sql += u" OFFSET %d" % offset
 
-    def get_topics_for_wiki(self, wiki_id, limit=10):
+        self.cursor.execute(sql)
+        if not for_api:
+            return OrderedDict([(x[0], dict(name=x[0], authority=x[1])) for x in self.cursor.fetchall()])
+        else:
+            return OrderedDict([(x[0], dict(topic=x[0], authority=x[1])) for x in self.cursor.fetchall()])
+
+    def get_topics_for_wiki(self, wiki_id, limit=10, offset=0, for_api=False):
         """
         Gets most important topics for this user on this wiki
         :param limit: the wiki id
         :type limit: str
         :param limit: limit
         :type limit: int
-        :return: ordered dict of topic name to auth
-        :rtype:class:`collections.OrderedDict`
+        :param offset: offset
+        :type offset: int
+        :param for_api: if it's for the api, we fix the naming
+        :type for_api: bool
+        :return: ordered dict of topic name to auth or a list of dicts for api
+        :rtype: `collections.OrderedDict`|list
         """
         sql = u"""
         SELECT topics.name, SUM(au.contribs * articles.local_authority) AS topic_authority
@@ -630,13 +764,29 @@ GROUP BY wikis.wiki_id ORDER BY SUM(articles_users.contribs * articles.global_au
                    INNER JOIN articles ON articles.article_id = au.article_id AND articles.wiki_id = au.wiki_id
                    INNER JOIN topics ON topics.topic_id = art.topic_id
         GROUP BY topics.topic_id
-        ORDER BY topic_authority""" % (wiki_id, self.user_name)
+        ORDER BY topic_authority DESC""" % (wiki_id, self.user_name)
 
         if limit:
             sql += u" LIMIT %d" % limit
 
+        if offset:
+            sql += u" OFFSET %d" % offset
+
         self.cursor.execute(sql)
-        return OrderedDict([(x[0], dict(name=x[0], authority=x[1])) for x in self.cursor.fetchall()])
+        if not for_api:
+            return OrderedDict([(x[0], dict(name=x[0], authority=x[1])) for x in self.cursor.fetchall()])
+        else:
+            return [dict(topic=x[0], authority=x[1]) for x in self.cursor.fetchall()]
+
+    def get_row(self):
+        """
+        Returns the row from the DB as a dict
+        :return: row data
+        :rtype: dict
+        """
+        self.cursor.execute(u'SELECT * FROM users WHERE user_name = "%s"' % self.db.escape_string(self.user_name))
+        row = self.cursor.fetchone()
+        return dict(user_id=row[0], user_name=row[1], total_authority=row[2])
 
 
 class MinMaxScaler:
