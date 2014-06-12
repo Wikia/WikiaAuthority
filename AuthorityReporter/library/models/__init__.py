@@ -559,7 +559,7 @@ class PageModel(BaseModel):
         :param page_id: the id of the page
         :type page_id: int
         :param args: namespace with db info
-        :type args:class:`arparse.Namespace`
+        :type args: arparse.Namespace
 
         """
         BaseModel.__init__(self, args)
