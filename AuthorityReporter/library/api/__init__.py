@@ -76,7 +76,7 @@ class WikiTopics(restful.Resource):
 
               HTTP/1.1 200 OK
               Vary: Accept
-              Content-Type: text/javascript
+              Content-Type: application/json
 
 
               {
@@ -138,7 +138,7 @@ class WikiAuthors(restful.Resource):
 
               HTTP/1.1 200 OK
               Vary: Accept
-              Content-Type: text/javascript
+              Content-Type: application/json
 
 
               {
@@ -201,7 +201,7 @@ class WikiPages(restful.Resource):
 
               HTTP/1.1 200 OK
               Vary: Accept
-              Content-Type: text/javascript
+              Content-Type: application/json
 
 
               {
@@ -263,7 +263,7 @@ class Wiki(restful.Resource):
 
               HTTP/1.1 200 OK
               Vary: Accept
-              Content-Type: text/javascript
+              Content-Type: application/json
 
 
               {
@@ -312,7 +312,7 @@ class TopicPages(restful.Resource):
 
               HTTP/1.1 200 OK
               Vary: Accept
-              Content-Type: text/javascript
+              Content-Type: application/json
 
 
               {
@@ -376,7 +376,7 @@ class TopicWikis(restful.Resource):
 
               HTTP/1.1 200 OK
               Vary: Accept
-              Content-Type: text/javascript
+              Content-Type: application/json
 
 
               {
@@ -439,7 +439,7 @@ class TopicAuthors(restful.Resource):
 
               HTTP/1.1 200 OK
               Vary: Accept
-              Content-Type: text/javascript
+              Content-Type: application/json
 
 
               {
@@ -502,7 +502,7 @@ class Topic(restful.Resource):
 
               HTTP/1.1 200 OK
               Vary: Accept
-              Content-Type: text/javascript
+              Content-Type: application/json
 
 
               {
@@ -549,7 +549,7 @@ class AuthorWikis(restful.Resource):
 
               HTTP/1.1 200 OK
               Vary: Accept
-              Content-Type: text/javascript
+              Content-Type: application/json
 
 
               {
@@ -612,7 +612,7 @@ class AuthorTopics(restful.Resource):
 
               HTTP/1.1 200 OK
               Vary: Accept
-              Content-Type: text/javascript
+              Content-Type: application/json
 
 
               {
@@ -674,7 +674,7 @@ class AuthorPages(restful.Resource):
 
               HTTP/1.1 200 OK
               Vary: Accept
-              Content-Type: text/javascript
+              Content-Type: application/json
 
 
               {
@@ -745,7 +745,7 @@ class AuthorWikiTopics(restful.Resource):
 
               HTTP/1.1 200 OK
               Vary: Accept
-              Content-Type: text/javascript
+              Content-Type: application/json
 
 
               {
@@ -808,7 +808,7 @@ class Author(restful.Resource):
 
               HTTP/1.1 200 OK
               Vary: Accept
-              Content-Type: text/javascript
+              Content-Type: application/json
 
 
               {
@@ -858,7 +858,7 @@ class PageAuthors(restful.Resource):
 
               HTTP/1.1 200 OK
               Vary: Accept
-              Content-Type: text/javascript
+              Content-Type: application/json
 
 
               {
@@ -926,7 +926,7 @@ class PageTopics(restful.Resource):
 
               HTTP/1.1 200 OK
               Vary: Accept
-              Content-Type: text/javascript
+              Content-Type: application/json
 
 
               {
@@ -993,7 +993,7 @@ class Page(restful.Resource):
 
               HTTP/1.1 200 OK
               Vary: Accept
-              Content-Type: text/javascript
+              Content-Type: application/json
 
 
               {
