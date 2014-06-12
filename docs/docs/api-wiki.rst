@@ -1,5 +1,5 @@
 Wikia Authority API -- Wiki Info
-================================
+===========================
 
 .. autoclass:: AuthorityReporter.library.api.Wiki
    :members:

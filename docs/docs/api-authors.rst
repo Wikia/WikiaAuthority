@@ -20,3 +20,8 @@ Wikia Authority API -- Author Info
    :members:
    :private-members:
    :special-members:
+
+.. autoclass:: AuthorityReporter.library.api.AuthorWikiTopics
+   :members:
+   :private-members:
+   :special-members:
