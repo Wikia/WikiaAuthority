@@ -6,7 +6,7 @@ Choose a section below.
 .. toctree::
    :maxdepth: 2
 
-   api-wikis
+   api-wiki
    api-authors
    api-pages
    api-topics
