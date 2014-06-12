@@ -42,7 +42,8 @@ class TopicModel(BaseModel):
         :param topic: the topic
         :type topic: str
         :param args: the argparse namespace w/ db info
-        :type args:class:`argparse.Namespace`
+        :type args: argparse.Namespace
+
         """
         self.topic = topic
         BaseModel.__init__(self, args)
@@ -224,6 +225,15 @@ class WikiModel(BaseModel):
     Logic for a given wiki
     """
     def __init__(self, wiki_id, args):
+        """
+        Initialized Wiki model
+
+        :param wiki_id: The ID of the wiki
+        :type wiki_id: int
+        :param args: arguments from command line
+        :type args: argparse.Namespace
+
+        """
         self.wiki_id = wiki_id
         self.args = args  # stupid di
         self._api_data = None
@@ -550,6 +560,7 @@ class PageModel(BaseModel):
         :type page_id: int
         :param args: namespace with db info
         :type args:class:`arparse.Namespace`
+
         """
         BaseModel.__init__(self, args)
         self.page_id = page_id
@@ -653,7 +664,8 @@ class UserModel(BaseModel):
         :param user_name: the username we care about
         :type user_name: str
         :param args: namespace
-        :type args:class:`argparse.Namespace`
+        :type args: argparse.Namespace
+
         """
         BaseModel.__init__(self, args)
         self.user_name = user_name
