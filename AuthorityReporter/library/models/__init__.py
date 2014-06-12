@@ -471,7 +471,7 @@ class WikiModel(BaseModel):
 
         topic_authority = self.get_topics(limit=None)
         for counter, topic in enumerate(topic_authority):
-            topic[u'authors'] = TopicModel(topic[u'topic'], self.args).get_users(5, with_api=False)
+            topic[u'authors'] = TopicModel(topic[u'topic'], self.args).get_users(5, for_api=True)
             if counter > 25:
                 break
 
@@ -718,7 +718,7 @@ class UserModel(BaseModel):
         :type for_api: bool
 
         :return: an ordereddict of wiki ids to wiki dicts, or a list, for API
-        :rtype: `collections.OrderedDict`|list
+        :rtype: collections.OrderedDict|list
         """
         self.cursor.execute(u"""
 SELECT wikis.wiki_id, wikis.url, SUM(articles_users.contribs * articles.global_authority) AS total_authority
