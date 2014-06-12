@@ -233,7 +233,9 @@ class WikiModel(BaseModel):
     def api_data(self):
         """
         Memoized lazy-loaded property access
-        :type: dict
+
+        :getter: Returns data about this wiki pulled from the Wikia API
+        :type: string
         """
         if not self._api_data:
             self._api_data = requests.get(u'http://www.wikia.com/api/v1/Wikis/Details',
@@ -559,8 +561,9 @@ class PageModel(BaseModel):
     def api_data(self):
         """
         Memoized lazy-loaded property access
-        :return: dict of api data
-        :rtype: data
+
+        :getter: returns data about article pulled from the Wikia API
+        :type: dict
         """
         if not self._api_data:
             self._api_data = requests.get(u'%sapi/v1/Articles/Details' % self.wiki.api_data[u'url'],
