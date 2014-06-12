@@ -296,7 +296,7 @@ class WikiModel(BaseModel):
         Optimized to get all authors
 
         :return: an OrderedDict with author dicts
-        :rtype:class:`collections.OrderedDict`
+        :rtype: collections.OrderedDict
         """
         self.cursor.execute(u"""
         SELECT users.user_id, users.user_name, SUM(articles.local_authority) AS total_authority
