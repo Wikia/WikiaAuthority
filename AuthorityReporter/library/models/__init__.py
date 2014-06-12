@@ -18,7 +18,7 @@ class BaseModel():
         Initializes db and cursor
 
         :param args: a namespace object with db connection data
-        :type args:class:`argparse.Namespace`
+        :type args: argparse.Namespace
         """
         self.db, self.cursor = get_db_and_cursor(args)
 
@@ -233,9 +233,7 @@ class WikiModel(BaseModel):
     def api_data(self):
         """
         Memoized lazy-loaded property access
-
-        :return: dict of api data
-        :rtype: dict
+        :type: dict
         """
         if not self._api_data:
             self._api_data = requests.get(u'http://www.wikia.com/api/v1/Wikis/Details',
