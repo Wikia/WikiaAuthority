@@ -16,6 +16,7 @@ class BaseModel():
     def __init__(self, args):
         """
         Initializes db and cursor
+
         :param args: a namespace object with db connection data
         :type args:class:`argparse.Namespace`
         """
@@ -37,6 +38,7 @@ class TopicModel(BaseModel):
     def __init__(self, topic, args):
         """
         Init method
+
         :param topic: the topic
         :type topic: str
         :param args: the argparse namespace w/ db info
@@ -48,12 +50,14 @@ class TopicModel(BaseModel):
     def get_pages(self, limit=10, offset=None, for_api=False):
         """
         Gets most authoritative pages for a topic using Authority DB and Wikia API data
+
         :param limit: Number of results we want
         :type limit: int
         :param offset: offset
         :type offset: int
         :param for_api: if it's for the api, we add less
         :type for_api: bool
+
         :return: a list of objects reflecting page results
         :rtype: list
         """
@@ -97,12 +101,14 @@ class TopicModel(BaseModel):
     def get_wikis(self, limit=10, offset=0, for_api=False):
         """
         Gets wikis for the current topic
+
         :param limit: the number of wikis we want
         :type limit: int
         :param offset: offset
         :type offset: int
         :param for_api: if it's for the api, we add less
         :type for_api: bool
+
         :return: a dict with keys for wikis (objects) and wiki ids (ints) for ordering or an ordered list of dicts
         :rtype: dict|list
         """
@@ -141,12 +147,14 @@ FROM topics
     def get_users(self, limit=10, offset=0, for_api=False):
         """
         Gets users for a given topic
+
         :param limit: the number of users we want
         :type limit: int
         :param offset: offset
         :type offset: int
         :param for_api: if it's for the api, we add less
         :type for_api: bool
+
         :return: a list of objects related to authors
         :rtype: list
         """
@@ -202,6 +210,7 @@ FROM topics
     def get_row(self):
         """
         Gets the database for this topic
+
         :rtype: dict
         :return: a dict representing the row and its column titles
         """
@@ -224,6 +233,7 @@ class WikiModel(BaseModel):
     def api_data(self):
         """
         Memoized lazy-loaded property access
+
         :return: dict of api data
         :rtype: dict
         """
@@ -235,6 +245,7 @@ class WikiModel(BaseModel):
     def get_row(self):
         """
         Gets the database for this wiki
+
         :rtype: dict
         :return: a dict representing the row and its column titles
         """
@@ -245,12 +256,14 @@ class WikiModel(BaseModel):
     def get_topics(self, limit=10, offset=None, for_api=False):
         """
         Get topics for this wiki
+
         :param limit: number of topics to get
         :type limit: int|None
         :param offset: offset
         :type offset: int
         :param for_api: if it's for the api, we add less
         :type for_api: bool
+
         :return: a list of dicts
         :rtype: list
         """
@@ -281,6 +294,7 @@ class WikiModel(BaseModel):
     def get_all_authors(self):
         """
         Optimized to get all authors
+
         :return: an OrderedDict with author dicts
         :rtype:class:`collections.OrderedDict`
         """
@@ -296,12 +310,14 @@ class WikiModel(BaseModel):
     def get_authors(self, limit=10, offset=None, for_api=False):
         """
         Provides the top authors for a wiki
+
         :param limit: number of authors you want
         :type limit: int
         :param offset: offset
         :type offset: int
         :param for_api: if it's for the api, we add less
         :type for_api: bool
+
         :return: list of author dicts
         :rtype: list
         """
@@ -338,12 +354,14 @@ class WikiModel(BaseModel):
     def get_pages(self, limit=10, offset=None, for_api=False):
         """
         Gets most authoritative pages for this wiki
+
         :param limit: the number of pages you want
         :type limit: int
         :param offset: offset
         :type offset: int
         :param for_api: if it's for the api, we add less
         :type for_api: bool
+
         :return: a list of page objects if not for api, otherwise an ordereddict
         :rtype: list|OrderedDict
         """
@@ -373,10 +391,12 @@ class WikiModel(BaseModel):
     def get_all_titles(self, apfrom=None, aplimit=500):
         """
         Returns all titles for this wiki
+
         :param apfrom: starting string
         :type apfrom: unicode
         :param aplimit: number of titles
         :type aplimit: int
+
         :return: list of pages
         :rtype: list
         """
@@ -396,6 +416,7 @@ class WikiModel(BaseModel):
     def get_all_pages(self):
         """
         Optimized for all pages
+
         :return: dict of pages
         :rtype: dict
         """
@@ -413,6 +434,7 @@ class WikiModel(BaseModel):
     def all_wikis(args):
         """
         Accesses all wikis from database
+
         :return: dict keying wiki name to ids
         :rtype: dict
         """
@@ -521,6 +543,7 @@ class PageModel(BaseModel):
     def __init__(self, wiki_id, page_id, args):
         """
         Init method
+
         :param wiki_id: the wiki id
         :type wiki_id: int
         :param page_id: the id of the page
@@ -549,12 +572,14 @@ class PageModel(BaseModel):
     def get_users(self, limit=10, offset=0, for_api=False):
         """
         Get the most authoritative users for this page
+
         :param limit: the number of users you want
         :type limit: int
         :param offset: offset
         :type offset: int
         :param for_api: if it's for the api, we add less
         :type for_api: bool
+
         :return: a list of of user dicts in order of authority
         :rtype: list
         """
@@ -578,12 +603,14 @@ class PageModel(BaseModel):
     def get_topics(self, limit=10, offset=0, for_api=False):
         """
         Get the topics for the current page
+
         :param limit: how much you want fool
         :type limit: int
         :param offset: offset
         :type offset: int
         :param for_api: if it's for the api, we add less
         :type for_api: bool
+
         :return: a list of dicts
         :rtype: list
         """
@@ -602,6 +629,7 @@ class PageModel(BaseModel):
     def get_row(self):
         """
         Returns the row from the DB as a dict
+
         :return: row data
         :rtype: dict
         """
@@ -620,6 +648,7 @@ class UserModel(BaseModel):
     def __init__(self, user_name, args):
         """
         init method
+
         :param user_name: the username we care about
         :type user_name: str
         :param args: namespace
@@ -632,12 +661,14 @@ class UserModel(BaseModel):
         """
         Gets top pages for this author
         calculated by contribs times global authority
+
         :param limit: how many you want
         :type limit: int
         :param offset: offset
         :type offset: int
         :param for_api: if it's for the api, we add less
         :type for_api: bool
+
         :return: a list of dicts
         :rtype: list
         """
@@ -678,12 +709,14 @@ class UserModel(BaseModel):
         """
         Most important wikis for this user
         Calculated by sum of contribs times global authority
+
         :param limit: the limit
         :type limit: int
         :param offset: offset
         :type offset: int
         :param for_api: if it's for the api, we add less
         :type for_api: bool
+
         :return: an ordereddict of wiki ids to wiki dicts, or a list, for API
         :rtype: `collections.OrderedDict`|list
         """
@@ -712,14 +745,16 @@ GROUP BY wikis.wiki_id ORDER BY total_authority DESC LIMIT %d OFFSET %d;
     def get_topics(self, limit=10, offset=0, for_api=False):
         """
         Gets most important topics for this user
+
         :param limit: limit
         :type limit: int
         :param offset: offset
         :type offset: int
         :param for_api: if it's for the api, we fix the naming
         :type for_api: bool
+
         :return: ordered dict of topic name to auth or a list of dicts
-        :rtype: `collections.OrderedDict`|list
+        :rtype: collections.OrderedDict|list
         """
         sql = u"""
         SELECT topics.name, SUM(au.contribs * articles.local_authority) AS topic_authority
@@ -745,6 +780,7 @@ GROUP BY wikis.wiki_id ORDER BY total_authority DESC LIMIT %d OFFSET %d;
     def get_topics_for_wiki(self, wiki_id, limit=10, offset=0, for_api=False):
         """
         Gets most important topics for this user on this wiki
+
         :param limit: the wiki id
         :type limit: str
         :param limit: limit
@@ -753,8 +789,9 @@ GROUP BY wikis.wiki_id ORDER BY total_authority DESC LIMIT %d OFFSET %d;
         :type offset: int
         :param for_api: if it's for the api, we fix the naming
         :type for_api: bool
+
         :return: ordered dict of topic name to auth or a list of dicts for api
-        :rtype: `collections.OrderedDict`|list
+        :rtype: collections.OrderedDict|list
         """
         sql = u"""
         SELECT topics.name, SUM(au.contribs * articles.local_authority) AS topic_authority
@@ -781,6 +818,7 @@ GROUP BY wikis.wiki_id ORDER BY total_authority DESC LIMIT %d OFFSET %d;
     def get_row(self):
         """
         Returns the row from the DB as a dict
+
         :return: row data
         :rtype: dict
         """
@@ -795,11 +833,30 @@ class MinMaxScaler:
     """
 
     def __init__(self, vals, enforced_min=0, enforced_max=1):
-        self.min = min(vals)
-        self.max = max(vals)
-        self.enforced_min = enforced_min
-        self.enforced_max = enforced_max
+        """
+        Init method
+
+        :param vals: an array of integer values
+        :type vals: list
+        :param enforced_min: the minimum value in the scaling (default 0)
+        :type enforced_min: float
+        :param enforced_max: the maximum value in the scaling (default 1)
+        :type enforced_max: float
+        """
+        self.min = float(min(vals))
+        self.max = float(max(vals))
+        self.enforced_min = float(enforced_min)
+        self.enforced_max = float(enforced_max)
 
     def scale(self, val):
-        return (((self.enforced_max - self.enforced_min) * (val - self.min))
+        """
+        Returns the scaled version of the value
+
+        :param val: the value you want to scale
+        :type val: float
+
+        :return: the scaled version of that value
+        :rtype: float
+        """
+        return (((self.enforced_max - self.enforced_min) * (float(val) - self.min))
                 / (self.max - self.min)) + self.enforced_min

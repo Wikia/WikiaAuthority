@@ -10,6 +10,7 @@ app_args = None
 def register_args(args):
     """
     Registers app args into this module
+
     :param args: args the args parsed from the command line when running the app
     :type args: argparse.Namespace
     """
@@ -20,6 +21,7 @@ def register_args(args):
 def register_resources(api):
     """
     Dynamically registers all restful resources in this module with the API
+
     :param api: the restful API object paired to the flask app
     :type api: restful.Api
     """
@@ -29,6 +31,12 @@ def register_resources(api):
 
 
 def get_request_parser():
+    """
+    Parses the request GET params
+
+    :return: a dict with parser args and vals
+    :rtype: dict
+    """
     parser = reqparse.RequestParser()
     parser.add_argument(u'limit', type=int, help=u'Limit', default=10)
     parser.add_argument(u'offset', type=int, help=u'Offset', default=0)
@@ -43,8 +51,10 @@ class WikiTopics(restful.Resource):
     def get(self, wiki_id):
         """
         Access a JSON response for the top topics for the given wiki
+
         :param wiki_id: the ID of the wiki
         :type wiki_id: int
+
         :return: the response dict
         :rtype: dict
 
@@ -103,8 +113,10 @@ class WikiAuthors(restful.Resource):
     def get(self, wiki_id):
         """
         Access a JSON response for the top authors for the given wiki
+
         :param wiki_id: the ID of the wiki
         :type wiki_id: int
+
         :return: the response dict
         :rtype: dict
 
@@ -164,8 +176,10 @@ class WikiPages(restful.Resource):
     def get(self, wiki_id):
         """
         Access a JSON response for the top pages for the given wiki
+
         :param wiki_id: the ID of the wiki
         :type wiki_id: int
+
         :return: the response dict
         :rtype: dict
 
@@ -224,8 +238,10 @@ class Wiki(restful.Resource):
     def get(self, wiki_id):
         """
         Access a JSON response representing data for the wiki, including authority
+
         :param wiki_id: the ID of the wiki
         :type wiki_id: int
+
         :return: the response dict
         :rtype: dict
 
@@ -271,8 +287,10 @@ class TopicPages(restful.Resource):
     def get(self, topic):
         """
         Access a JSON response for the top pages for the given topic
+
         :param topic: the topic in question
         :type topic: str
+
         :return: the response dict
         :rtype: dict
 
@@ -333,8 +351,10 @@ class TopicWikis(restful.Resource):
     def get(self, topic):
         """
         Access a JSON response for the top wikis for the given topic
+
         :param topic: the topic in question
         :type topic: str
+
         :return: the response dict
         :rtype: dict
 
@@ -394,8 +414,10 @@ class TopicAuthors(restful.Resource):
     def get(self, topic):
         """
         Access a JSON response for the top authors for the given topic
+
         :param topic: the topic in question
         :type topic: str
+
         :return: the response dict
         :rtype: dict
 
@@ -455,8 +477,10 @@ class Topic(restful.Resource):
     def get(self, topic):
         """
         Access a JSON response representing data for the topic, including authority
+
         :param topic: the string value of the topic
         :type topic: str
+
         :return: the response dict
         :rtype: dict
 
@@ -500,8 +524,10 @@ class AuthorWikis(restful.Resource):
     def get(self, user_name):
         """
         Access a JSON response for the top wikis for the given user
+
         :param user_name: the name of the user in question
         :type user_name: str
+
         :return: the response dict
         :rtype: dict
 
@@ -561,8 +587,10 @@ class AuthorTopics(restful.Resource):
     def get(self, user_name):
         """
         Access a JSON response for the top topics for the given user
+
         :param user_name: the name of the user in question
         :type user_name: str
+
         :return: the response dict
         :rtype: dict
 
@@ -621,8 +649,10 @@ class AuthorPages(restful.Resource):
     def get(self, user_name):
         """
         Access a JSON response for the top pages for the given user
+
         :param user_name: the name of the user in question
         :type user_name: str
+
         :return: the response dict
         :rtype: dict
 
@@ -688,10 +718,12 @@ class AuthorWikiTopics(restful.Resource):
     def get(self, user_name, wiki_id):
         """
         Access a JSON response for the top topics for the given user and wiki
+
         :param user_name: the name of the user in question
         :type user_name: str
         :param wiki_id: the id of the wiki
         :type wiki_id: int
+
         :return: the response dict
         :rtype: dict
 
@@ -751,8 +783,10 @@ class Author(restful.Resource):
         """
         Access a JSON response representing data for the author, including authority.
         Scaled authority is for comparing authors
-        :param topic: the string value of the topic
-        :type topic: str
+
+        :param user_name: the string value of the author
+        :type user_name: str
+
         :return: the response dict
         :rtype: dict
 
@@ -797,10 +831,12 @@ class PageAuthors(restful.Resource):
     def get(self, wiki_id, article_id):
         """
         Access a JSON response for the top authors for the given wiki
+
         :param wiki_id: the ID of the wiki
         :type wiki_id: int
         :param article_id: the id of the article
         :type article_id: int
+
         :return: the response dict
         :rtype: dict
 
@@ -863,10 +899,12 @@ class PageTopics(restful.Resource):
     def get(self, wiki_id, article_id):
         """
         Access a JSON response for the top topics for the given page, sorted by total authority
+
         :param wiki_id: the ID of the wiki
         :type wiki_id: int
         :param article_id: the id of the article
         :type article_id: int
+
         :return: the response dict
         :rtype: dict
 
@@ -928,10 +966,12 @@ class Page(restful.Resource):
     def get(self, wiki_id, article_id):
         """
         Access a JSON response representing the page, including authority
+
         :param wiki_id: the ID of the wiki
         :type wiki_id: int
         :param article_id: the id of the article
         :type article_id: int
+
         :return: the response dict
         :rtype: dict
 
